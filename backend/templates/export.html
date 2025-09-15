@@ -1,0 +1,274 @@
+{% extends "base.html" %}
+
+{% block title %}Export Materials - AI Course Generator{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h4><i class="fas fa-download me-2"></i>Export Course Materials</h4>
+            </div>
+            <div class="card-body">
+                {% if module_data %}
+                <div class="module-info mb-4 p-3 bg-light rounded">
+                    <h5>{{ module_data.title }} ({{ module_data.code }})</h5>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p class="mb-1"><strong>Credits:</strong> {{ module_data.credits }}</p>
+                            <p class="mb-1"><strong>Semester:</strong> {{ module_data.semester }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            {% if generated_content %}
+                            <p class="mb-1"><strong>Generated Files:</strong> {{ generated_content.total_files }}</p>
+                            <p class="mb-1"><strong>Weeks Covered:</strong> {{ generated_content.weekly_content|length }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Generation Status -->
+                {% if status == 'generated' %}
+                <div class="alert alert-success">
+                    <i class="fas fa-check-circle me-2"></i>
+                    <strong>Content Generation Complete!</strong> All course materials have been generated and are ready for export.
+                </div>
+                {% elif status == 'generating' %}
+                <div class="alert alert-info">
+                    <i class="fas fa-spinner fa-spin me-2"></i>
+                    <strong>Generating Content...</strong> Please wait while we create your course materials.
+                </div>
+                {% else %}
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Content Not Ready.</strong> Please complete the previous steps first.
+                </div>
+                {% endif %}
+
+                <!-- Export Options -->
+                {% if status == 'generated' %}
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <h5>Export Options</h5>
+                        <div class="export-options">
+                            <div class="export-card" data-format="complete">
+                                <i class="fas fa-archive"></i>
+                                <h6>Complete Package</h6>
+                                <p class="text-muted">Download everything in a single ZIP file</p>
+                                <button class="btn btn-primary" data-action="download-package">
+                                    <i class="fas fa-download me-1"></i>Download ZIP
+                                </button>
+                            </div>
+                            
+                            <div class="export-card" data-format="lectures">
+                                <i class="fas fa-chalkboard-teacher"></i>
+                                <h6>Lecture Materials</h6>
+                                <p class="text-muted">Notes, slides, and transcripts only</p>
+                                <button class="btn btn-outline-primary download-btn" disabled>
+                                    <i class="fas fa-download me-1"></i>Download
+                                </button>
+                            </div>
+                            
+                            <div class="export-card" data-format="assessments">
+                                <i class="fas fa-tasks"></i>
+                                <h6>Assessments</h6>
+                                <p class="text-muted">Quizzes, labs, and seminar materials</p>
+                                <button class="btn btn-outline-primary download-btn" disabled>
+                                    <i class="fas fa-download me-1"></i>Download
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Generated Content Preview -->
+                <div class="row">
+                    <div class="col-12">
+                        <h5>Generated Content Overview</h5>
+                        {% if generated_content and generated_content.weekly_content %}
+                        <div class="accordion" id="contentAccordion">
+                            {% for week_content in generated_content.weekly_content %}
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="heading{{ week_content.week_number }}">
+                                    <button class="accordion-button collapsed" type="button" 
+                                            data-bs-toggle="collapse" data-bs-target="#collapse{{ week_content.week_number }}">
+                                        <i class="fas fa-calendar-week me-2"></i>
+                                        Week {{ week_content.week_number }} Content
+                                        <span class="badge bg-primary ms-2">
+                                            {{ week_content.lecture_notes|length + week_content.lecture_slides|length + 
+                                               week_content.lab_sheets|length + week_content.quizzes|length + 
+                                               week_content.seminar_prompts|length + week_content.transcripts|length }} files
+                                        </span>
+                                    </button>
+                                </h2>
+                                <div id="collapse{{ week_content.week_number }}" class="accordion-collapse collapse" 
+                                     data-bs-parent="#contentAccordion">
+                                    <div class="accordion-body">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <h6><i class="fas fa-file-alt me-1"></i>Lecture Materials</h6>
+                                                <ul class="list-group list-group-flush mb-3">
+                                                    {% for note in week_content.lecture_notes %}
+                                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                        {{ note.title }}
+                                                        <span class="badge bg-success">{{ note.format }}</span>
+                                                    </li>
+                                                    {% endfor %}
+                                                    {% for slide in week_content.lecture_slides %}
+                                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                        {{ slide.title }}
+                                                        <span class="badge bg-info">{{ slide.format }}</span>
+                                                    </li>
+                                                    {% endfor %}
+                                                </ul>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <h6><i class="fas fa-tasks me-1"></i>Activities & Assessments</h6>
+                                                <ul class="list-group list-group-flush mb-3">
+                                                    {% for lab in week_content.lab_sheets %}
+                                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                        {{ lab.title }}
+                                                        <span class="badge bg-warning">Lab</span>
+                                                    </li>
+                                                    {% endfor %}
+                                                    {% for quiz in week_content.quizzes %}
+                                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                        {{ quiz.title }}
+                                                        <span class="badge bg-danger">Quiz</span>
+                                                    </li>
+                                                    {% endfor %}
+                                                    {% for seminar in week_content.seminar_prompts %}
+                                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                        {{ seminar.title }}
+                                                        <span class="badge bg-secondary">Seminar</span>
+                                                    </li>
+                                                    {% endfor %}
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">No generated content available yet.</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% else %}
+                <!-- Generation Controls -->
+                <div class="text-center py-4">
+                    <h5>Ready to Generate Content?</h5>
+                    <p class="text-muted">This process will create all lecture materials, assessments, and supporting documents.</p>
+                    <button class="btn btn-success btn-lg" data-action="generate-content">
+                        <i class="fas fa-magic me-2"></i>Generate All Content
+                    </button>
+                </div>
+                {% endif %}
+
+                <!-- Progress Indicator -->
+                <div class="mt-4 p-3 bg-light rounded">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="fw-bold">Progress:</span>
+                        <div class="progress" style="width: 60%; height: 8px;">
+                            <div class="progress-bar" role="progressbar" style="width: {% if status == 'generated' %}100{% else %}75{% endif %}%"></div>
+                        </div>
+                        <span class="text-muted">{% if status == 'generated' %}4{% else %}3{% endif %} of 4 steps</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Generation Progress Modal -->
+<div class="modal fade" id="generationModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-cogs me-2"></i>Generating Content
+                </h5>
+            </div>
+            <div class="modal-body">
+                <div class="generation-step" id="genStep1">
+                    <i class="fas fa-spinner fa-spin me-2"></i>
+                    Creating lecture notes and slides...
+                </div>
+                <div class="generation-step" id="genStep2" style="display: none;">
+                    <i class="fas fa-spinner fa-spin me-2"></i>
+                    Designing lab exercises and activities...
+                </div>
+                <div class="generation-step" id="genStep3" style="display: none;">
+                    <i class="fas fa-spinner fa-spin me-2"></i>
+                    Generating assessments and quizzes...
+                </div>
+                <div class="generation-step" id="genStep4" style="display: none;">
+                    <i class="fas fa-spinner fa-spin me-2"></i>
+                    Creating transcripts and audio scripts...
+                </div>
+                <div class="generation-step" id="genStep5" style="display: none;">
+                    <i class="fas fa-check text-success me-2"></i>
+                    Content generation complete!
+                </div>
+                
+                <div class="progress mt-3">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                         id="generationProgress" role="progressbar" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Show generation modal when content generation starts
+document.addEventListener('click', function(e) {
+    if (e.target.matches('[data-action="generate-content"]')) {
+        const modal = new bootstrap.Modal(document.getElementById('generationModal'));
+        modal.show();
+        
+        // Simulate generation steps
+        simulateGeneration();
+    }
+});
+
+function simulateGeneration() {
+    const steps = ['genStep1', 'genStep2', 'genStep3', 'genStep4', 'genStep5'];
+    const progressBar = document.getElementById('generationProgress');
+    
+    steps.forEach((stepId, index) => {
+        setTimeout(() => {
+            // Hide previous step
+            if (index > 0) {
+                const prevStep = document.getElementById(steps[index - 1]);
+                if (prevStep) prevStep.style.display = 'none';
+            }
+            
+            // Show current step
+            const currentStep = document.getElementById(stepId);
+            if (currentStep) currentStep.style.display = 'block';
+            
+            // Update progress
+            const progress = ((index + 1) / steps.length) * 100;
+            progressBar.style.width = progress + '%';
+            
+            // Close modal and refresh on completion
+            if (index === steps.length - 1) {
+                setTimeout(() => {
+                    location.reload();
+                }, 2000);
+            }
+            
+        }, index * 3000); // 3 seconds between steps
+    });
+}
+</script>
+{% endblock %}

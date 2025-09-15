@@ -1,0 +1,174 @@
+ 
+{% extends "base.html" %}
+
+{% block title %}Upload Files - AI Course Generator{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h4><i class="fas fa-upload me-2"></i>Upload Module Specification</h4>
+            </div>
+            <div class="card-body">
+                <form id="uploadForm" enctype="multipart/form-data">
+                    <input type="hidden" name="session_id" value="{{ session_id }}">
+                    
+                    <!-- Module Specification Upload -->
+                    <div class="mb-4">
+                        <label for="moduleFile" class="form-label">
+                            <strong>Module Specification <span class="text-danger">*</span></strong>
+                        </label>
+                        <input type="file" class="form-control" id="moduleFile" name="module_file" 
+                               accept=".pdf,.docx,.doc" required>
+                        <div class="form-text">
+                            Upload your module specification document (PDF, Word). 
+                            This should contain learning outcomes, assessments, and course structure.
+                        </div>
+                    </div>
+
+                    <!-- Optional Textbooks -->
+                    <div class="mb-4">
+                        <label for="textbookFiles" class="form-label">
+                            <strong>Textbooks/References (Optional)</strong>
+                        </label>
+                        <input type="file" class="form-control" id="textbookFiles" name="textbook_files" 
+                               accept=".pdf,.docx,.doc" multiple>
+                        <div class="form-text">
+                            Upload relevant textbooks or reference materials to enhance content generation.
+                        </div>
+                    </div>
+
+                    <!-- Progress Bar -->
+                    <div class="progress mb-3" id="uploadProgress" style="display: none;">
+                        <div class="progress-bar" role="progressbar" style="width: 0%"></div>
+                    </div>
+
+                    <!-- Status Messages -->
+                    <div id="statusMessages"></div>
+
+                    <!-- Submit Button -->
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg" id="uploadBtn">
+                            <i class="fas fa-upload me-2"></i>
+                            Process Files
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Processing Steps -->
+        <div class="card mt-4" id="processingCard" style="display: none;">
+            <div class="card-header">
+                <h5><i class="fas fa-cogs me-2"></i>Processing Status</h5>
+            </div>
+            <div class="card-body">
+                <div class="processing-step" id="step1">
+                    <i class="fas fa-spinner fa-spin me-2"></i>
+                    Extracting text from uploaded files...
+                </div>
+                <div class="processing-step" id="step2" style="display: none;">
+                    <i class="fas fa-spinner fa-spin me-2"></i>
+                    Analyzing module structure and requirements...
+                </div>
+                <div class="processing-step" id="step3" style="display: none;">
+                    <i class="fas fa-spinner fa-spin me-2"></i>
+                    Identifying learning outcomes and assessments...
+                </div>
+                <div class="processing-step" id="step4" style="display: none;">
+                    <i class="fas fa-check text-success me-2"></i>
+                    Processing complete! Redirecting to planning stage...
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// In backend/templates/upload.html, fix the redirection in the upload success handler:
+
+async function handleUploadSuccess(result) {
+    // Show success step
+    document.getElementById('step3').style.display = 'none';
+    document.getElementById('step4').style.display = 'block';
+    
+    // Store session data
+    sessionStorage.setItem('moduleData', JSON.stringify(result.module_data));
+    
+    // Get the session ID from the form or response
+    const sessionId = document.querySelector('input[name="session_id"]').value;
+    
+    // Redirect to the correct review URL
+    setTimeout(() => {
+        window.location.href = `/review/${sessionId}`;
+    }, 2000);
+}
+
+// Update the main upload form handler:
+document.getElementById('uploadForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const uploadBtn = document.getElementById('uploadBtn');
+    const processingCard = document.getElementById('processingCard');
+    const statusMessages = document.getElementById('statusMessages');
+    
+    // Disable form and show processing
+    uploadBtn.disabled = true;
+    uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
+    processingCard.style.display = 'block';
+    
+    // Simulate processing steps
+    setTimeout(() => {
+        document.getElementById('step1').style.display = 'none';
+        document.getElementById('step2').style.display = 'block';
+    }, 2000);
+    
+    setTimeout(() => {
+        document.getElementById('step2').style.display = 'none';
+        document.getElementById('step3').style.display = 'block';
+    }, 4000);
+    
+    try {
+        const response = await fetch('/api/upload', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok) {
+            // Show success step
+            document.getElementById('step3').style.display = 'none';
+            document.getElementById('step4').style.display = 'block';
+            
+            // Get session ID from form data
+            const sessionId = formData.get('session_id');
+            
+            // Store session data and redirect
+            sessionStorage.setItem('moduleData', JSON.stringify(result.module_data));
+            setTimeout(() => {
+                window.location.href = `/review/${sessionId}`;
+            }, 2000);
+            
+        } else {
+            throw new Error(result.detail || 'Upload failed');
+        }
+        
+    } catch (error) {
+        statusMessages.innerHTML = `
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                Error: ${error.message}
+            </div>
+        `;
+        uploadBtn.disabled = false;
+        uploadBtn.innerHTML = '<i class="fas fa-upload me-2"></i>Process Files';
+        processingCard.style.display = 'none';
+    }
+});
+</script>
+{% endblock %}

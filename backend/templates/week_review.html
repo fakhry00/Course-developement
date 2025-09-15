@@ -1,0 +1,1756 @@
+{% extends "base.html" %}
+
+{% block title %}Review Weekly Plan - AI Course Generator{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <!-- Module Information Panel -->
+        {% if module_data %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h4><i class="fas fa-info-circle me-2"></i>Module Information</h4>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5>{{ module_data.title }} ({{ module_data.code }})</h5>
+                        <p class="mb-3">
+                            <span class="badge bg-primary me-2">{{ module_data.credits }} Credits</span>
+                            <span class="badge bg-info me-2">{{ module_data.semester }}</span>
+                            <span class="badge bg-secondary">{{ module_data.academic_year }}</span>
+                        </p>
+                        
+                        {% if module_data.description %}
+                        <div class="mb-3">
+                            <h6><i class="fas fa-file-text me-1"></i>Module Description:</h6>
+                            <p class="text-muted">{{ module_data.description }}</p>
+                        </div>
+                        {% endif %}
+
+                        {% if module_data.prerequisites %}
+                        <div class="mb-3">
+                            <h6><i class="fas fa-list me-1"></i>Prerequisites:</h6>
+                            <ul class="mb-0">
+                                {% for prereq in module_data.prerequisites %}
+                                <li>{{ prereq }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        {% endif %}
+
+                        {% if module_data.textbooks %}
+                        <div class="mb-3">
+                            <h6><i class="fas fa-book me-1"></i>Available Textbooks:</h6>
+                            <ul class="mb-0">
+                                {% for textbook in module_data.textbooks %}
+                                <li>{{ textbook }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        {% endif %}
+
+                        <!-- New: Module Topics -->
+                        <div class="mb-3">
+                            <h6><i class="fas fa-lightbulb me-1"></i>Main Topics:</h6>
+                            <div class="topics-container">
+                                {% if module_data.topics %}
+                                    {% for topic in module_data.topics %}
+                                    <span class="badge bg-light text-dark border me-2 mb-2">{{ topic }}</span>
+                                    {% endfor %}
+                                {% else %}
+                                    <div class="topics-input-group">
+                                        <div class="input-group mb-2">
+                                            <input type="text" class="form-control" id="newTopicInput" placeholder="Enter a main topic...">
+                                            <button class="btn btn-outline-success" onclick="addModuleTopic()">
+                                                <i class="fas fa-plus"></i>
+                                            </button>
+                                        </div>
+                                        <div id="moduleTopicsList" class="topics-list">
+                                            <!-- Topics will be added here -->
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- New: Teaching Methods -->
+                        <div class="mb-3">
+                            <h6><i class="fas fa-chalkboard-teacher me-1"></i>Teaching Methods:</h6>
+                            <div class="teaching-methods">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-check mb-2">
+                                            <input class="form-check-input" type="checkbox" id="lectures" checked>
+                                            <label class="form-check-label" for="lectures">Lectures</label>
+                                        </div>
+                                        <div class="form-check mb-2">
+                                            <input class="form-check-input" type="checkbox" id="seminars" checked>
+                                            <label class="form-check-label" for="seminars">Seminars</label>
+                                        </div>
+                                        <div class="form-check mb-2">
+                                            <input class="form-check-input" type="checkbox" id="workshops">
+                                            <label class="form-check-label" for="workshops">Workshops</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-check mb-2">
+                                            <input class="form-check-input" type="checkbox" id="tutorials" checked>
+                                            <label class="form-check-label" for="tutorials">Tutorials</label>
+                                        </div>
+                                        <div class="form-check mb-2">
+                                            <input class="form-check-input" type="checkbox" id="practicals">
+                                            <label class="form-check-label" for="practicals">Practical Sessions</label>
+                                        </div>
+                                        <div class="form-check mb-2">
+                                            <input class="form-check-input" type="checkbox" id="fieldwork">
+                                            <label class="form-check-label" for="fieldwork">Fieldwork</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-bullseye me-1"></i>Learning Outcomes:</h6>
+                        <div class="learning-outcomes-list">
+                            {% for lo in module_data.learning_outcomes %}
+                            <div class="lo-item mb-2 p-2 border rounded bg-light">
+                                <strong>{{ lo.id }}:</strong> {{ lo.description }}
+                                {% if lo.level %}
+                                <small class="text-muted d-block">Level: {{ lo.level }}</small>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                        </div>
+
+                        <!-- New: Learning Approaches -->
+                        <div class="mt-3 mb-3">
+                            <h6><i class="fas fa-brain me-1"></i>Learning Approaches:</h6>
+                            <div class="learning-approaches">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-check mb-2">
+                                            <input class="form-check-input" type="checkbox" id="collaborative" checked>
+                                            <label class="form-check-label" for="collaborative">Collaborative Learning</label>
+                                        </div>
+                                        <div class="form-check mb-2">
+                                            <input class="form-check-input" type="checkbox" id="problemBased">
+                                            <label class="form-check-label" for="problemBased">Problem-Based Learning</label>
+                                        </div>
+                                        <div class="form-check mb-2">
+                                            <input class="form-check-input" type="checkbox" id="experimental" checked>
+                                            <label class="form-check-label" for="experimental">Experimental Learning</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-check mb-2">
+                                            <input class="form-check-input" type="checkbox" id="caseStudy">
+                                            <label class="form-check-label" for="caseStudy">Case Study Analysis</label>
+                                        </div>
+                                        <div class="form-check mb-2">
+                                            <input class="form-check-input" type="checkbox" id="projectBased">
+                                            <label class="form-check-label" for="projectBased">Project-Based Learning</label>
+                                        </div>
+                                        <div class="form-check mb-2">
+                                            <input class="form-check-input" type="checkbox" id="flipped">
+                                            <label class="form-check-label" for="flipped">Flipped Classroom</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {% if module_data.assessments %}
+                        <div class="mt-3">
+                            <h6><i class="fas fa-clipboard-check me-1"></i>Assessments:</h6>
+                            {% for assessment in module_data.assessments %}
+                            <div class="assessment-item mb-2 p-2 border rounded">
+                                <strong>{{ assessment.name }}</strong> ({{ assessment.weight }}%)
+                                <br><small class="text-muted">Type: {{ assessment.type }}</small>
+                                {% if assessment.description %}
+                                <br><small class="text-muted">{{ assessment.description }}</small>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Weekly Plan Review -->
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h4><i class="fas fa-calendar-alt me-2"></i>Weekly Plan Review</h4>
+                <div>
+                    <button class="btn btn-outline-secondary me-2" onclick="generatePlan()" id="regenerateBtn">
+                        <i class="fas fa-sync-alt me-1"></i> Regenerate Plan
+                    </button>
+                    <button class="btn btn-success" onclick="approvePlan()" id="approveBtn">
+                        <i class="fas fa-check me-1"></i> Approve & Continue
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <!-- Plan Generation Status -->
+                <div id="planGenerationStatus" style="display: none;">
+                    <div class="alert alert-info">
+                        <i class="fas fa-spinner fa-spin me-2"></i>
+                        Generating weekly plan based on module specifications...
+                    </div>
+                </div>
+
+                <!-- Weekly Plan Container -->
+                <div id="weeklyPlanContainer">
+                    {% if week_plans %}
+                        <!-- Learning Outcomes Legend -->
+                        <div class="alert alert-light mb-4">
+                            <h6><i class="fas fa-map me-1"></i>Learning Outcomes Reference:</h6>
+                            <div class="row">
+                                {% for lo in module_data.learning_outcomes %}
+                                <div class="col-md-6 mb-1">
+                                    <span class="badge bg-outline-primary me-1">{{ lo.id }}</span>
+                                    <small>{{ lo.description[:80] }}{% if lo.description|length > 80 %}...{% endif %}</small>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        {% for week in week_plans %}
+                        <div class="week-card card mb-3" data-week="{{ week.week_number }}">
+                            <!-- Update the week card header section -->
+                            <div class="card-header">
+                                <div class="row align-items-center">
+                                    <div class="col">
+                                        <h6 class="mb-0">
+                                            Week {{ week.week_number }}: 
+                                            <input type="text" class="form-control d-inline-block week-title" 
+                                                   style="width: 300px; display: inline-block;" 
+                                                   value="{{ week.title }}" 
+                                                   data-week="{{ week.week_number }}">
+                                        </h6>
+                                        <!-- Learning Outcomes badges -->
+                                        <div class="mt-1">
+                                            {% for lo in week.learning_outcomes %}
+                                            <span class="badge bg-primary me-1">{{ lo }}</span>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                    <div class="col-auto">
+                                        <!-- Individual Week Generation Controls -->
+                                        <div class="week-actions d-flex gap-2">
+                                            <div class="dropdown">
+                                                <button class="btn btn-sm btn-outline-success dropdown-toggle" type="button" 
+                                                        data-bs-toggle="dropdown" aria-expanded="false" 
+                                                        id="generateWeekBtn{{ week.week_number }}">
+                                                    <i class="fas fa-magic me-1"></i> Generate Week
+                                                </button>
+                                                <ul class="dropdown-menu">
+                                                    <li><h6 class="dropdown-header">Select Materials to Generate</h6></li>
+                                                    <li>
+                                                        <a class="dropdown-item" href="#" onclick="generateWeekMaterials({{ week.week_number }}, ['lecture_notes'])">
+                                                            <i class="fas fa-file-alt me-2"></i>Lecture Notes Only
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <a class="dropdown-item" href="#" onclick="generateWeekMaterials({{ week.week_number }}, ['lecture_slides'])">
+                                                            <i class="fas fa-presentation me-2"></i>Slides Only
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <a class="dropdown-item" href="#" onclick="generateWeekMaterials({{ week.week_number }}, ['lecture_notes', 'lecture_slides'])">
+                                                            <i class="fas fa-layer-group me-2"></i>Notes + Slides
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <a class="dropdown-item" href="#" onclick="generateWeekMaterials({{ week.week_number }}, ['assessments'])">
+                                                            <i class="fas fa-tasks me-2"></i>Assessments Only
+                                                        </a>
+                                                    </li>
+                                                    <li><hr class="dropdown-divider"></li>
+                                                    <li>
+                                                        <a class="dropdown-item" href="#" onclick="generateWeekMaterials({{ week.week_number }}, ['lecture_notes', 'lecture_slides', 'transcripts', 'assessments', 'seminar_materials'])">
+                                                            <i class="fas fa-star me-2"></i>All Materials
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <a class="dropdown-item" href="#" onclick="showCustomMaterialsModal({{ week.week_number }})">
+                                                            <i class="fas fa-cogs me-2"></i>Custom Selection
+                                                        </a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+
+                                            <button class="btn btn-sm btn-outline-primary" type="button" 
+                                                    data-bs-toggle="collapse" data-bs-target="#week{{ week.week_number }}Details">
+                                                <i class="fas fa-edit"></i> Edit Details
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Week Generation Progress (hidden by default) -->
+                                <div class="week-generation-progress mt-2" id="weekProgress{{ week.week_number }}" style="display: none;">
+                                    <div class="progress" style="height: 20px;">
+                                        <div class="progress-bar progress-bar-striped progress-bar-animated bg-success" 
+                                             role="progressbar" style="width: 0%" id="weekProgressBar{{ week.week_number }}">
+                                            <span class="fw-bold" id="weekProgressText{{ week.week_number }}">0%</span>
+                                        </div>
+                                    </div>
+                                    <small class="text-muted mt-1" id="weekProgressStatus{{ week.week_number }}">Preparing generation...</small>
+                                </div>
+                            </div>
+                            
+                            <div class="collapse" id="week{{ week.week_number }}Details">
+                                <div class="card-body">
+                                    <!-- Enhanced Week Description Section -->
+                                    <div class="row mb-4">
+                                        <div class="col-12">
+                                            <div class="week-description-section">
+                                                <h6><i class="fas fa-align-left me-2"></i>Week Description & Overview</h6>
+                                                <textarea class="form-control week-description" rows="3" 
+                                                          placeholder="Provide a detailed description of what will be covered this week, including key concepts, objectives, and expected outcomes..."
+                                                          data-week="{{ week.week_number }}">{{ week.description or '' }}</textarea>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="row">
+                                        <!-- Learning Outcomes -->
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label">
+                                                <strong><i class="fas fa-bullseye me-1"></i>Learning Outcomes Addressed</strong>
+                                            </label>
+                                            <div class="learning-outcomes-selector" data-week="{{ week.week_number }}">
+                                                {% for module_lo in module_data.learning_outcomes %}
+                                                <div class="form-check">
+                                                    <input class="form-check-input lo-checkbox" type="checkbox" 
+                                                           value="{{ module_lo.id }}" 
+                                                           id="week{{ week.week_number }}_{{ module_lo.id }}"
+                                                           {% if module_lo.id in week.learning_outcomes %}checked{% endif %}>
+                                                    <label class="form-check-label" for="week{{ week.week_number }}_{{ module_lo.id }}">
+                                                        <strong>{{ module_lo.id }}:</strong> {{ module_lo.description }}
+                                                    </label>
+                                                </div>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+
+                                        <!-- Content Areas -->
+                                        <div class="col-md-6">
+                                            <!-- Lecture Topics -->
+                                            <div class="mb-3">
+                                                <label class="form-label">
+                                                    <strong><i class="fas fa-chalkboard-teacher me-1"></i>Lecture Topics</strong>
+                                                </label>
+                                                <div class="lecture-topics" data-week="{{ week.week_number }}">
+                                                    {% for topic in week.lecture_topics %}
+                                                    <div class="input-group mb-2">
+                                                        <input type="text" class="form-control lecture-topic" value="{{ topic }}">
+                                                        <button class="btn btn-outline-danger btn-sm" onclick="removeItem(this)">
+                                                            <i class="fas fa-times"></i>
+                                                        </button>
+                                                    </div>
+                                                    {% endfor %}
+                                                    <button class="btn btn-sm btn-outline-success" onclick="addLectureTopic({{ week.week_number }})">
+                                                        <i class="fas fa-plus me-1"></i> Add Topic
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            <!-- Tutorial Activities -->
+                                            <div class="mb-3">
+                                                <label class="form-label">
+                                                    <strong><i class="fas fa-users me-1"></i>Tutorial Activities</strong>
+                                                </label>
+                                                <div class="tutorial-activities" data-week="{{ week.week_number }}">
+                                                    {% for activity in week.tutorial_activities %}
+                                                    <div class="input-group mb-2">
+                                                        <input type="text" class="form-control tutorial-activity" value="{{ activity }}">
+                                                        <button class="btn btn-outline-danger btn-sm" onclick="removeItem(this)">
+                                                            <i class="fas fa-times"></i>
+                                                        </button>
+                                                    </div>
+                                                    {% endfor %}
+                                                    <button class="btn btn-sm btn-outline-success" onclick="addTutorialActivity({{ week.week_number }})">
+                                                        <i class="fas fa-plus me-1"></i> Add Activity
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            <!-- Lab Activities -->
+                                            <div class="mb-3">
+                                                <label class="form-label">
+                                                    <strong><i class="fas fa-flask me-1"></i>Lab Activities</strong>
+                                                </label>
+                                                <div class="lab-activities" data-week="{{ week.week_number }}">
+                                                    {% for lab in week.lab_activities %}
+                                                    <div class="input-group mb-2">
+                                                        <input type="text" class="form-control lab-activity" value="{{ lab }}">
+                                                        <button class="btn btn-outline-danger btn-sm" onclick="removeItem(this)">
+                                                            <i class="fas fa-times"></i>
+                                                        </button>
+                                                    </div>
+                                                    {% endfor %}
+                                                    <button class="btn btn-sm btn-outline-success" onclick="addLabActivity({{ week.week_number }})">
+                                                        <i class="fas fa-plus me-1"></i> Add Lab
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Support Resources Section -->
+                                    <div class="row mt-4">
+                                        <div class="col-12">
+                                            <div class="support-resources-section">
+                                                <h6><i class="fas fa-folder-open me-2"></i>Support Resources</h6>
+                                                <div class="row">
+                                                    <div class="col-md-6">
+                                                        <!-- Required Readings -->
+                                                        <div class="mb-3">
+                                                            <label class="form-label">
+                                                                <strong><i class="fas fa-book-open me-1"></i>Required Readings</strong>
+                                                            </label>
+                                                            <div class="readings" data-week="{{ week.week_number }}">
+                                                                {% for reading in week.readings %}
+                                                                <div class="input-group mb-2">
+                                                                    <input type="text" class="form-control reading" value="{{ reading }}">
+                                                                    <button class="btn btn-outline-danger btn-sm" onclick="removeItem(this)">
+                                                                        <i class="fas fa-times"></i>
+                                                                    </button>
+                                                                </div>
+                                                                {% endfor %}
+                                                                <button class="btn btn-sm btn-outline-success" onclick="addReading({{ week.week_number }})">
+                                                                    <i class="fas fa-plus me-1"></i> Add Reading
+                                                                </button>
+                                                            </div>
+                                                        </div>
+
+                                                        <!-- Deliverables -->
+                                                        <div class="mb-3">
+                                                            <label class="form-label">
+                                                                <strong><i class="fas fa-tasks me-1"></i>Deliverables</strong>
+                                                            </label>
+                                                            <div class="deliverables" data-week="{{ week.week_number }}">
+                                                                {% for deliverable in week.deliverables %}
+                                                                <div class="input-group mb-2">
+                                                                    <input type="text" class="form-control deliverable" value="{{ deliverable }}">
+                                                                    <button class="btn btn-outline-danger btn-sm" onclick="removeItem(this)">
+                                                                        <i class="fas fa-times"></i>
+                                                                    </button>
+                                                                </div>
+                                                                {% endfor %}
+                                                                <button class="btn btn-sm btn-outline-success" onclick="addDeliverable({{ week.week_number }})">
+                                                                    <i class="fas fa-plus me-1"></i> Add Deliverable
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <div class="col-md-6">
+                                                        <!-- File Upload for Additional Resources -->
+                                                        <div class="mb-3">
+                                                            <label class="form-label">
+                                                                <strong><i class="fas fa-paperclip me-1"></i>Additional Resource Files</strong>
+                                                            </label>
+                                                            <div class="resource-files-section" data-week="{{ week.week_number }}">
+                                                                <div class="file-upload-area border-2 border-dashed rounded p-3 text-center mb-3">
+                                                                    <input type="file" class="form-control-file d-none" id="resourceFiles{{ week.week_number }}" 
+                                                                           multiple accept=".pdf,.doc,.docx,.ppt,.pptx,.txt,.png,.jpg,.jpeg,.gif"
+                                                                           onchange="handleResourceFileUpload({{ week.week_number }}, this)">
+                                                                    <label for="resourceFiles{{ week.week_number }}" class="w-100 cursor-pointer">
+                                                                        <i class="fas fa-cloud-upload-alt fa-2x text-muted mb-2"></i>
+                                                                        <p class="text-muted mb-0">Click to upload or drag files here</p>
+                                                                        <small class="text-muted">PDF, Word, PowerPoint, Images, Text files</small>
+                                                                    </label>
+                                                                </div>
+                                                                
+                                                                <!-- Uploaded Files List -->
+                                                                <div class="uploaded-files-list" id="uploadedFilesList{{ week.week_number }}">
+                                                                    <!-- Uploaded files will appear here -->
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        <!-- External Resources -->
+                                                        <div class="mb-3">
+                                                            <label class="form-label">
+                                                                <strong><i class="fas fa-link me-1"></i>External Resources</strong>
+                                                            </label>
+                                                            <div class="external-resources" data-week="{{ week.week_number }}">
+                                                                {% for resource in week.external_resources or [] %}
+                                                                <div class="input-group mb-2">
+                                                                    <input type="url" class="form-control external-resource" 
+                                                                           placeholder="https://example.com" value="{{ resource }}">
+                                                                    <button class="btn btn-outline-danger btn-sm" onclick="removeItem(this)">
+                                                                        <i class="fas fa-times"></i>
+                                                                    </button>
+                                                                </div>
+                                                                {% endfor %}
+                                                                <button class="btn btn-sm btn-outline-success" onclick="addExternalResource({{ week.week_number }})">
+                                                                    <i class="fas fa-plus me-1"></i> Add URL
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Teaching Notes Section -->
+                                    <div class="row mt-4">
+                                        <div class="col-12">
+                                            <div class="teaching-notes-section">
+                                                <h6><i class="fas fa-sticky-note me-2"></i>Teaching Notes & Instructions</h6>
+                                                <textarea class="form-control teaching-notes" rows="3" 
+                                                          placeholder="Add any special instructions, teaching tips, or notes for this week..."
+                                                          data-week="{{ week.week_number }}">{{ week.teaching_notes or '' }}</textarea>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-calendar-plus fa-3x text-muted mb-3"></i>
+                            <h5>No weekly plan generated yet</h5>
+                            <p class="text-muted">Click "Generate Weekly Plan" to create a weekly breakdown for this module.</p>
+                            <button class="btn btn-primary" onclick="generatePlan()">
+                                <i class="fas fa-magic me-2"></i>Generate Weekly Plan
+                            </button>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Resource File Preview Modal -->
+<div class="modal fade" id="resourcePreviewModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="previewModalTitle">Resource Preview</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="previewModalBody">
+                <!-- Preview content will be loaded here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="downloadResourceBtn">
+                    <i class="fas fa-download me-2"></i>Download
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Global variables
+const sessionId = "{{ session_id }}";
+let weeklyPlanData = {{ week_plans | tojson if week_plans else '[]' }};
+let uploadedResources = {}; // Store uploaded resources by week
+let moduleData = {{ module_data | tojson if module_data else '{}' }};
+
+// Module topics management
+function addModuleTopic() {
+    const input = document.getElementById('newTopicInput');
+    const topic = input.value.trim();
+    
+    if (topic) {
+        const topicsList = document.getElementById('moduleTopicsList');
+        const topicElement = document.createElement('span');
+        topicElement.className = 'badge bg-light text-dark border me-2 mb-2';
+        topicElement.innerHTML = `
+            ${topic}
+            <button type="button" class="btn-close btn-close-sm ms-1" onclick="removeModuleTopic(this)"></button>
+        `;
+        
+        topicsList.appendChild(topicElement);
+        input.value = '';
+    }
+}
+
+function removeModuleTopic(button) {
+    button.parentElement.remove();
+}
+
+// Generate new weekly plan
+// Update the generatePlan function in backend/templates/week_review.html
+
+function checkModuleData() {
+    if (!moduleData || Object.keys(moduleData).length === 0) {
+        showModuleDataMissing();
+        return false;
+    }
+    return true;
+}
+
+function showModuleDataMissing() {
+    const container = document.getElementById('weeklyPlanContainer');
+    container.innerHTML = `
+        <div class="alert alert-warning">
+            <div class="text-center py-4">
+                <i class="fas fa-exclamation-triangle fa-3x text-warning mb-3"></i>
+                <h5>Module Data Missing</h5>
+                <p class="mb-3">No module specification data was found for this session.</p>
+                <p class="text-muted mb-4">You need to upload and process your module specification before generating a weekly plan.</p>
+                <a href="/upload" class="btn btn-primary">
+                    <i class="fas fa-upload me-2"></i>Upload Module Specification
+                </a>
+                <button class="btn btn-outline-secondary ms-2" onclick="location.reload()">
+                    <i class="fas fa-refresh me-2"></i>Refresh Page
+                </button>
+            </div>
+        </div>
+    `;
+    
+    // Disable the action buttons
+    document.getElementById('regenerateBtn').disabled = true;
+    document.getElementById('approveBtn').disabled = true;
+}
+
+// Enhanced generate plan function with better error handling
+async function generatePlan() {
+    if (!checkModuleData()) {
+        return;
+    }
+    
+    const regenerateBtn = document.getElementById('regenerateBtn');
+    const statusDiv = document.getElementById('planGenerationStatus');
+    const containerDiv = document.getElementById('weeklyPlanContainer');
+    
+    // Collect module information including new data
+    const moduleInfo = collectModuleInformation();
+    
+    // Show loading state
+    regenerateBtn.disabled = true;
+    regenerateBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Generating...';
+    statusDiv.style.display = 'block';
+    
+    try {
+        const formData = new FormData();
+        formData.append('session_id', sessionId);
+        formData.append('module_info', JSON.stringify(moduleInfo));
+        
+        const response = await fetch('/api/generate-plan', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok) {
+            // Update the page with new plan
+            weeklyPlanData = result.week_plans;
+            location.reload(); // Reload to show new plan
+        } else {
+            if (response.status === 400 && result.detail.includes('Module data not found')) {
+                showModuleDataMissing();
+                throw new Error('Please upload your module specification first.');
+            } else {
+                throw new Error(result.detail || 'Failed to generate plan');
+            }
+        }
+        
+    } catch (error) {
+        console.error('Plan generation error:', error);
+        
+        // Show error in the container
+        containerDiv.innerHTML = `
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                <strong>Error generating plan:</strong> ${error.message}
+                <div class="mt-3">
+                    <button class="btn btn-outline-primary" onclick="location.reload()">
+                        <i class="fas fa-refresh me-2"></i>Try Again
+                    </button>
+                    <a href="/upload" class="btn btn-primary ms-2">
+                        <i class="fas fa-upload me-2"></i>Upload New Module
+                    </a>
+                </div>
+            </div>
+        `;
+    } finally {
+        regenerateBtn.disabled = false;
+        regenerateBtn.innerHTML = '<i class="fas fa-sync-alt me-1"></i> Regenerate Plan';
+        statusDiv.style.display = 'none';
+    }
+}
+
+// Collect module information including topics and teaching methods
+function collectModuleInformation() {
+    const topics = Array.from(document.querySelectorAll('#moduleTopicsList .badge')).map(badge => 
+        badge.textContent.trim()
+    );
+    
+    const teachingMethods = [];
+    document.querySelectorAll('.teaching-methods input[type="checkbox"]:checked').forEach(checkbox => {
+        teachingMethods.push(checkbox.id);
+    });
+    
+    const learningApproaches = [];
+    document.querySelectorAll('.learning-approaches input[type="checkbox"]:checked').forEach(checkbox => {
+        learningApproaches.push(checkbox.id);
+    });
+    
+    return {
+        topics,
+        teaching_methods: teachingMethods,
+        learning_approaches: learningApproaches
+    };
+}
+
+// Approve the current plan and save it
+async function approvePlan() {
+    const approveBtn = document.getElementById('approveBtn');
+    
+    // Collect all current week data
+    const updatedPlan = collectWeekData();
+    
+    approveBtn.disabled = true;
+    approveBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Saving Plan...';
+    
+    try {
+        // First, save the approved plan
+        const formData = new FormData();
+        formData.append('session_id', sessionId);
+        formData.append('approved_weeks', JSON.stringify(updatedPlan));
+        
+        const response = await fetch('/api/approve-plan', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok) {
+            // Save weekly plan to text file
+            await saveWeeklyPlanFile();
+            
+            // Upload any resource files
+            await uploadResourceFiles();
+            
+            // Redirect to material selection
+            window.location.href = `/material-selection/${sessionId}`;
+        } else {
+            throw new Error(result.detail || 'Failed to approve plan');
+        }
+        
+    } catch (error) {
+        alert('Error approving plan: ' + error.message);
+        approveBtn.disabled = false;
+        approveBtn.innerHTML = '<i class="fas fa-check me-1"></i> Approve & Continue';
+    }
+}
+
+// Save weekly plan to text file
+async function saveWeeklyPlanFile() {
+    try {
+        const response = await fetch('/api/save-weekly-plan', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                session_id: sessionId
+            })
+        });
+        
+        if (!response.ok) {
+            console.warn('Could not save weekly plan file');
+        }
+    } catch (error) {
+        console.warn('Error saving weekly plan file:', error);
+    }
+}
+
+// Collect current week data from the form
+function collectWeekData() {
+    const weeks = [];
+    const weekCards = document.querySelectorAll('.week-card');
+    
+    weekCards.forEach(card => {
+        const weekNumber = parseInt(card.getAttribute('data-week'));
+        const title = card.querySelector('.week-title').value;
+        const description = card.querySelector('.week-description').value;
+        const teachingNotes = card.querySelector('.teaching-notes').value;
+        
+        // Collect learning outcomes
+        const learningOutcomes = [];
+        card.querySelectorAll('.lo-checkbox:checked').forEach(checkbox => {
+            learningOutcomes.push(checkbox.value);
+        });
+        
+        // Collect lecture topics
+        const lectureTopics = [];
+        card.querySelectorAll('.lecture-topic').forEach(input => {
+            if (input.value.trim()) {
+                lectureTopics.push(input.value.trim());
+            }
+        });
+        
+        // Collect tutorial activities
+        const tutorialActivities = [];
+        card.querySelectorAll('.tutorial-activity').forEach(input => {
+            if (input.value.trim()) {
+                tutorialActivities.push(input.value.trim());
+            }
+        });
+        
+        // Collect lab activities
+        const labActivities = [];
+        card.querySelectorAll('.lab-activity').forEach(input => {
+            if (input.value.trim()) {
+                labActivities.push(input.value.trim());
+            }
+        });
+        
+        // Collect readings
+        const readings = [];
+        card.querySelectorAll('.reading').forEach(input => {
+            if (input.value.trim()) {
+                readings.push(input.value.trim());
+            }
+        });
+        
+        // Collect deliverables
+        const deliverables = [];
+        card.querySelectorAll('.deliverable').forEach(input => {
+            if (input.value.trim()) {
+                deliverables.push(input.value.trim());
+            }
+        });
+        
+        // Collect external resources
+        const externalResources = [];
+        card.querySelectorAll('.external-resource').forEach(input => {
+            if (input.value.trim()) {
+                externalResources.push(input.value.trim());
+            }
+        });
+        
+        weeks.push({
+            week_number: weekNumber,
+            title: title,
+            description: description,
+            teaching_notes: teachingNotes,
+            learning_outcomes: learningOutcomes,
+            lecture_topics: lectureTopics,
+            tutorial_activities: tutorialActivities,
+            lab_activities: labActivities,
+            readings: readings,
+            deliverables: deliverables,
+            external_resources: externalResources,
+            resource_files: uploadedResources[weekNumber] || []
+        });
+    });
+    
+    return weeks;
+}
+
+// Helper functions for adding/removing items
+function removeItem(button) {
+    button.parentElement.remove();
+}
+
+function addLectureTopic(weekNumber) {
+    const container = document.querySelector(`.lecture-topics[data-week="${weekNumber}"]`);
+    const newItem = document.createElement('div');
+    newItem.className = 'input-group mb-2';
+    newItem.innerHTML = `
+        <input type="text" class="form-control lecture-topic" placeholder="Enter lecture topic">
+        <button class="btn btn-outline-danger btn-sm" onclick="removeItem(this)">
+            <i class="fas fa-times"></i>
+        </button>
+    `;
+    container.insertBefore(newItem, container.lastElementChild);
+    newItem.querySelector('input').focus();
+}
+
+function addTutorialActivity(weekNumber) {
+    const container = document.querySelector(`.tutorial-activities[data-week="${weekNumber}"]`);
+    const newItem = document.createElement('div');
+    newItem.className = 'input-group mb-2';
+    newItem.innerHTML = `
+        <input type="text" class="form-control tutorial-activity" placeholder="Enter tutorial activity">
+        <button class="btn btn-outline-danger btn-sm" onclick="removeItem(this)">
+            <i class="fas fa-times"></i>
+        </button>
+    `;
+    container.insertBefore(newItem, container.lastElementChild);
+    newItem.querySelector('input').focus();
+}
+
+function addLabActivity(weekNumber) {
+    const container = document.querySelector(`.lab-activities[data-week="${weekNumber}"]`);
+    const newItem = document.createElement('div');
+    newItem.className = 'input-group mb-2';
+    newItem.innerHTML = `
+        <input type="text" class="form-control lab-activity" placeholder="Enter lab activity">
+        <button class="btn btn-outline-danger btn-sm" onclick="removeItem(this)">
+            <i class="fas fa-times"></i>
+        </button>
+    `;
+    container.insertBefore(newItem, container.lastElementChild);
+    newItem.querySelector('input').focus();
+}
+
+function addReading(weekNumber) {
+    const container = document.querySelector(`.readings[data-week="${weekNumber}"]`);
+    const newItem = document.createElement('div');
+    newItem.className = 'input-group mb-2';
+    newItem.innerHTML = `
+        <input type="text" class="form-control reading" placeholder="Enter reading reference">
+        <button class="btn btn-outline-danger btn-sm" onclick="removeItem(this)">
+            <i class="fas fa-times"></i>
+        </button>
+    `;
+    container.insertBefore(newItem, container.lastElementChild);
+    newItem.querySelector('input').focus();
+}
+
+function addDeliverable(weekNumber) {
+    const container = document.querySelector(`.deliverables[data-week="${weekNumber}"]`);
+    const newItem = document.createElement('div');
+    newItem.className = 'input-group mb-2';
+    newItem.innerHTML = `
+        <input type="text" class="form-control deliverable" placeholder="Enter deliverable">
+        <button class="btn btn-outline-danger btn-sm" onclick="removeItem(this)">
+            <i class="fas fa-times"></i>
+        </button>
+    `;
+    container.insertBefore(newItem, container.lastElementChild);
+    newItem.querySelector('input').focus();
+}
+
+function addExternalResource(weekNumber) {
+    const container = document.querySelector(`.external-resources[data-week="${weekNumber}"]`);
+    const newItem = document.createElement('div');
+    newItem.className = 'input-group mb-2';
+    newItem.innerHTML = `
+        <input type="url" class="form-control external-resource" placeholder="https://example.com">
+        <button class="btn btn-outline-danger btn-sm" onclick="removeItem(this)">
+            <i class="fas fa-times"></i>
+        </button>
+    `;
+    container.insertBefore(newItem, container.lastElementChild);
+    newItem.querySelector('input').focus();
+}
+
+// Handle resource file uploads
+function handleResourceFileUpload(weekNumber, fileInput) {
+    const files = Array.from(fileInput.files);
+    
+    if (files.length === 0) return;
+    
+    if (!uploadedResources[weekNumber]) {
+        uploadedResources[weekNumber] = [];
+    }
+    
+    const filesList = document.getElementById(`uploadedFilesList${weekNumber}`);
+    
+    files.forEach(file => {
+        // Create file info object
+        const fileInfo = {
+            name: file.name,
+            size: file.size,
+            type: file.type,
+            lastModified: file.lastModified,
+            file: file
+        };
+        
+        uploadedResources[weekNumber].push(fileInfo);
+        
+        // Create file display element
+        const fileElement = document.createElement('div');
+        fileElement.className = 'uploaded-file-item d-flex justify-content-between align-items-center p-2 mb-2 border rounded';
+        fileElement.innerHTML = `
+            <div class="file-info d-flex align-items-center">
+                <i class="${getFileIcon(file.type)} fa-lg me-2 text-primary"></i>
+                <div>
+                    <div class="file-name fw-bold">${file.name}</div>
+                    <small class="text-muted">${formatFileSize(file.size)}</small>
+                </div>
+            </div>
+            <div class="file-actions">
+                <button class="btn btn-sm btn-outline-primary me-1" onclick="previewResourceFile(${weekNumber}, '${file.name}')">
+                    <i class="fas fa-eye"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-danger" onclick="removeResourceFile(${weekNumber}, '${file.name}', this)">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        `;
+        
+        filesList.appendChild(fileElement);
+    });
+    
+    // Clear the input
+    fileInput.value = '';
+}
+
+function removeResourceFile(weekNumber, fileName, button) {
+    // Remove from uploaded resources
+    if (uploadedResources[weekNumber]) {
+        uploadedResources[weekNumber] = uploadedResources[weekNumber].filter(file => file.name !== fileName);
+    }
+    
+    // Remove from UI
+    button.closest('.uploaded-file-item').remove();
+}
+
+function previewResourceFile(weekNumber, fileName) {
+    const fileInfo = uploadedResources[weekNumber]?.find(file => file.name === fileName);
+    
+    if (!fileInfo) return;
+    
+    const modal = new bootstrap.Modal(document.getElementById('resourcePreviewModal'));
+    const modalTitle = document.getElementById('previewModalTitle');
+    const modalBody = document.getElementById('previewModalBody');
+    const downloadBtn = document.getElementById('downloadResourceBtn');
+    
+    modalTitle.textContent = fileName;
+    
+    // Set up download button
+    downloadBtn.onclick = () => {
+        const url = URL.createObjectURL(fileInfo.file);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        a.click();
+        URL.revokeObjectURL(url);
+    };
+    
+    // Show preview based on file type
+    if (fileInfo.type.startsWith('image/')) {
+        modalBody.innerHTML = `
+            <div class="text-center">
+                <img src="${URL.createObjectURL(fileInfo.file)}" class="img-fluid" alt="${fileName}">
+            </div>
+        `;
+    } else if (fileInfo.type === 'text/plain') {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            modalBody.innerHTML = `
+                <pre class="bg-light p-3 rounded" style="max-height: 400px; overflow-y: auto;">${e.target.result}</pre>
+            `;
+        };
+        reader.readAsText(fileInfo.file);
+    } else {
+        modalBody.innerHTML = `
+            <div class="text-center py-4">
+                <i class="${getFileIcon(fileInfo.type)} fa-4x text-muted mb-3"></i>
+                <h5>${fileName}</h5>
+                <p class="text-muted">Size: ${formatFileSize(fileInfo.size)}</p>
+                <p class="text-muted">Type: ${fileInfo.type || 'Unknown'}</p>
+                <p class="text-muted">Preview not available for this file type.</p>
+            </div>
+        `;
+    }
+    
+    modal.show();
+}
+
+// Upload resource files to server
+async function uploadResourceFiles() {
+    for (const [weekNumber, files] of Object.entries(uploadedResources)) {
+        if (files.length === 0) continue;
+        
+        try {
+            const formData = new FormData();
+            formData.append('session_id', sessionId);
+            formData.append('week_number', weekNumber);
+            
+            files.forEach(fileInfo => {
+                formData.append('resource_files', fileInfo.file);
+            });
+            
+            const response = await fetch('/api/upload-resource-files', {
+                method: 'POST',
+                body: formData
+            });
+            
+            if (!response.ok) {
+                console.warn(`Failed to upload resource files for week ${weekNumber}`);
+            }
+            
+        } catch (error) {
+            console.warn(`Error uploading resource files for week ${weekNumber}:`, error);
+        }
+    }
+}
+
+// Utility functions
+function getFileIcon(mimeType) {
+    if (mimeType.startsWith('image/')) return 'fas fa-image';
+    if (mimeType.includes('pdf')) return 'fas fa-file-pdf';
+    if (mimeType.includes('word') || mimeType.includes('document')) return 'fas fa-file-word';
+    if (mimeType.includes('powerpoint') || mimeType.includes('presentation')) return 'fas fa-file-powerpoint';
+    if (mimeType.includes('text')) return 'fas fa-file-alt';
+    if (mimeType.includes('video')) return 'fas fa-file-video';
+    if (mimeType.includes('audio')) return 'fas fa-file-audio';
+    return 'fas fa-file';
+}
+
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+// Auto-save functionality
+document.addEventListener('DOMContentLoaded', function() {
+    // Add change listeners for auto-save
+    document.addEventListener('change', function(e) {
+        if (e.target.matches('.week-title, .lo-checkbox, .lecture-topic, .tutorial-activity, .lab-activity, .reading, .deliverable, .external-resource, .week-description, .teaching-notes')) {
+            // Auto-save changes (could implement this to save to session storage)
+            console.log('Auto-saving changes...');
+        }
+    });
+    
+    checkModuleData();
+    
+    // Auto-generate plan if not available and module data exists
+    if (weeklyPlanData.length === 0 && Object.keys(moduleData).length > 0) {
+        generatePlan();
+    } else if (Object.keys(moduleData).length === 0) {
+        showModuleDataMissing();
+    }
+});
+
+// Add drag and drop functionality for file uploads
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.file-upload-area').forEach(area => {
+        area.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            this.classList.add('border-primary', 'bg-light');
+        });
+        
+        area.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            this.classList.remove('border-primary', 'bg-light');
+        });
+        
+        area.addEventListener('drop', function(e) {
+            e.preventDefault();
+            this.classList.remove('border-primary', 'bg-light');
+            
+            const weekNumber = parseInt(this.closest('[data-week]').dataset.week);
+            const fileInput = this.querySelector('input[type="file"]');
+            
+            if (e.dataTransfer.files.length > 0) {
+                fileInput.files = e.dataTransfer.files;
+                handleResourceFileUpload(weekNumber, fileInput);
+            }
+        });
+    });
+});
+
+// Individual week generation functionality
+let weekGenerationRequests = {};
+
+async function generateWeekMaterials(weekNumber, materials) {
+    try {
+        // Show progress bar
+        const progressContainer = document.getElementById(`weekProgress${weekNumber}`);
+        const progressBar = document.getElementById(`weekProgressBar${weekNumber}`);
+        const progressText = document.getElementById(`weekProgressText${weekNumber}`);
+        const progressStatus = document.getElementById(`weekProgressStatus${weekNumber}`);
+        const generateBtn = document.getElementById(`generateWeekBtn${weekNumber}`);
+        
+        // Update UI
+        progressContainer.style.display = 'block';
+        generateBtn.disabled = true;
+        generateBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Generating...';
+        
+        // Start generation
+        const formData = new FormData();
+        formData.append('session_id', sessionId);
+        formData.append('week_number', weekNumber);
+        formData.append('materials', materials.join(','));
+        
+        const response = await fetch('/api/generate-week', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok) {
+            const requestId = result.request_id;
+            weekGenerationRequests[weekNumber] = requestId;
+            
+            // Start progress monitoring
+            monitorWeekGeneration(weekNumber, requestId);
+            
+        } else {
+            throw new Error(result.detail || 'Failed to start generation');
+        }
+        
+    } catch (error) {
+        console.error('Error generating week materials:', error);
+        alert('Error starting week generation: ' + error.message);
+        
+        // Reset UI
+        resetWeekGenerationUI(weekNumber);
+    }
+}
+
+function monitorWeekGeneration(weekNumber, requestId) {
+    const eventSource = new EventSource(`/api/week-generation-progress/${requestId}`);
+    
+    eventSource.onmessage = function(event) {
+        const data = JSON.parse(event.data);
+        updateWeekGenerationProgress(weekNumber, data);
+        
+        if (data.completed || data.error) {
+            eventSource.close();
+            
+            if (data.completed) {
+                handleWeekGenerationComplete(weekNumber, data);
+            } else {
+                handleWeekGenerationError(weekNumber, data.error);
+            }
+        }
+    };
+    
+    eventSource.onerror = function(event) {
+        console.error('Week generation progress stream error:', event);
+        eventSource.close();
+        handleWeekGenerationError(weekNumber, 'Connection lost');
+    };
+}
+
+function updateWeekGenerationProgress(weekNumber, data) {
+    const progressBar = document.getElementById(`weekProgressBar${weekNumber}`);
+    const progressText = document.getElementById(`weekProgressText${weekNumber}`);
+    const progressStatus = document.getElementById(`weekProgressStatus${weekNumber}`);
+    
+    if (progressBar && progressText && progressStatus) {
+        progressBar.style.width = data.progress + '%';
+        progressText.textContent = data.progress + '%';
+        progressStatus.textContent = data.message || 'Processing...';
+    }
+}
+
+function handleWeekGenerationComplete(weekNumber, data) {
+    const progressStatus = document.getElementById(`weekProgressStatus${weekNumber}`);
+    const generateBtn = document.getElementById(`generateWeekBtn${weekNumber}`);
+    
+    if (progressStatus) {
+        progressStatus.innerHTML = `
+            <i class="fas fa-check-circle text-success me-1"></i>
+            Generation complete! Generated ${data.generated_materials.length} materials.
+        `;
+    }
+    
+    if (generateBtn) {
+        generateBtn.disabled = false;
+        generateBtn.innerHTML = '<i class="fas fa-magic me-1"></i> Generate Week';
+        generateBtn.classList.remove('btn-outline-success');
+        generateBtn.classList.add('btn-outline-primary');
+    }
+    
+    // Show success notification
+    showWeekNotification(weekNumber, 'success', `Week ${weekNumber} materials generated successfully!`);
+    
+    // Hide progress after 5 seconds
+    setTimeout(() => {
+        const progressContainer = document.getElementById(`weekProgress${weekNumber}`);
+        if (progressContainer) {
+            progressContainer.style.display = 'none';
+        }
+    }, 5000);
+}
+
+function handleWeekGenerationError(weekNumber, error) {
+    const progressStatus = document.getElementById(`weekProgressStatus${weekNumber}`);
+    
+    if (progressStatus) {
+        progressStatus.innerHTML = `
+            <i class="fas fa-exclamation-triangle text-danger me-1"></i>
+            Error: ${error}
+        `;
+    }
+    
+    resetWeekGenerationUI(weekNumber);
+    showWeekNotification(weekNumber, 'error', `Error generating Week ${weekNumber}: ${error}`);
+}
+
+function resetWeekGenerationUI(weekNumber) {
+    const generateBtn = document.getElementById(`generateWeekBtn${weekNumber}`);
+    
+    if (generateBtn) {
+        generateBtn.disabled = false;
+        generateBtn.innerHTML = '<i class="fas fa-magic me-1"></i> Generate Week';
+    }
+}
+
+function showWeekNotification(weekNumber, type, message) {
+    const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+    const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-triangle';
+    
+    const notification = document.createElement('div');
+    notification.className = `alert ${alertClass} alert-dismissible fade show position-fixed`;
+    notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    notification.innerHTML = `
+        <i class="fas ${icon} me-2"></i>${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.remove();
+        }
+    }, 5000);
+}
+
+// Custom materials selection modal
+function showCustomMaterialsModal(weekNumber) {
+    // Create modal HTML dynamically
+    const modalHTML = `
+        <div class="modal fade" id="customMaterialsModal${weekNumber}" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Select Materials for Week ${weekNumber}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="material-selection">
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" id="lectureNotes${weekNumber}" value="lecture_notes">
+                                <label class="form-check-label" for="lectureNotes${weekNumber}">
+                                    <i class="fas fa-file-alt me-2"></i>Lecture Notes
+                                </label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" id="lectureSlides${weekNumber}" value="lecture_slides">
+                                <label class="form-check-label" for="lectureSlides${weekNumber}">
+                                    <i class="fas fa-presentation me-2"></i>Lecture Slides
+                                </label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" id="transcripts${weekNumber}" value="transcripts">
+                                <label class="form-check-label" for="transcripts${weekNumber}">
+                                    <i class="fas fa-microphone me-2"></i>Lecture Transcripts
+                                </label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" id="labMaterials${weekNumber}" value="lab_materials">
+                                <label class="form-check-label" for="labMaterials${weekNumber}">
+                                    <i class="fas fa-flask me-2"></i>Lab Materials
+                                </label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" id="assessments${weekNumber}" value="assessments">
+                                <label class="form-check-label" for="assessments${weekNumber}">
+                                    <i class="fas fa-tasks me-2"></i>Assessments
+                                </label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" id="seminarMaterials${weekNumber}" value="seminar_materials">
+                                <label class="form-check-label" for="seminarMaterials${weekNumber}">
+                                    <i class="fas fa-users me-2"></i>Seminar Materials
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-primary" onclick="generateCustomWeekMaterials(${weekNumber})">
+                            <i class="fas fa-magic me-2"></i>Generate Selected
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Add modal to page
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById(`customMaterialsModal${weekNumber}`));
+    modal.show();
+    
+    // Remove modal from DOM when hidden
+    modal._element.addEventListener('hidden.bs.modal', function () {
+        this.remove();
+    });
+}
+
+function generateCustomWeekMaterials(weekNumber) {
+    const selectedMaterials = [];
+    const checkboxes = document.querySelectorAll(`#customMaterialsModal${weekNumber} input[type="checkbox"]:checked`);
+    
+    checkboxes.forEach(checkbox => {
+        selectedMaterials.push(checkbox.value);
+    });
+    
+    if (selectedMaterials.length === 0) {
+        alert('Please select at least one material type.');
+        return;
+    }
+    
+    // Hide modal
+    bootstrap.Modal.getInstance(document.getElementById(`customMaterialsModal${weekNumber}`)).hide();
+    
+    // Start generation
+    generateWeekMaterials(weekNumber, selectedMaterials);
+}
+
+// Add to the existing JavaScript in week_review.html
+
+// Fix the refreshStatus function
+function refreshStatus() {
+    const btn = document.getElementById('refreshBtn');
+    if (btn) {
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        btn.disabled = true;
+    }
+    
+    fetch(`/api/session-status/${sessionId}`)
+        .then(response => {
+            if (response.ok) {
+                return response.json();
+            } else if (response.status === 404) {
+                console.warn('Session not found, initializing new session state');
+                return { status: 'initialized', message: 'Session initialized' };
+            } else {
+                throw new Error(`HTTP ${response.status}`);
+            }
+        })
+        .then(data => {
+            console.log('Session status:', data);
+            // Update UI based on status
+            if (data.status && data.status !== 'unknown') {
+                updateSessionStatus(data);
+            }
+        })
+        .catch(error => {
+            console.error('Error checking session status:', error);
+            // Don't show error to user unless it's critical
+        })
+        .finally(() => {
+            if (btn) {
+                btn.innerHTML = '<i class="fas fa-sync-alt"></i>';
+                btn.disabled = false;
+            }
+        });
+}
+
+function updateSessionStatus(statusData) {
+    // Update any UI elements based on session status
+    console.log('Updating session status:', statusData);
+    
+    // You can add specific UI updates here based on the status
+    if (statusData.error_message) {
+        console.warn('Session has error:', statusData.error_message);
+    }
+    
+    if (statusData.has_materials) {
+        // Maybe show a notice that materials exist
+        console.info('Session has generated materials available');
+    }
+}
+
+// Add session health check
+async function checkSessionHealth() {
+    try {
+        const response = await fetch(`/api/session-health/${sessionId}`);
+        const health = await response.json();
+        
+        if (!health.healthy) {
+            console.warn('Session health issues detected:', health.message);
+            // Could show a warning to the user
+        }
+        
+        return health.healthy;
+    } catch (error) {
+        console.error('Error checking session health:', error);
+        return false;
+    }
+}
+
+// Call health check on page load
+document.addEventListener('DOMContentLoaded', function() {
+    // Add change listeners for auto-save
+    document.addEventListener('change', function(e) {
+        if (e.target.matches('.week-title, .lo-checkbox, .lecture-topic, .tutorial-activity, .lab-activity, .reading, .deliverable, .external-resource, .week-description, .teaching-notes')) {
+            console.log('Auto-saving changes...');
+        }
+    });
+    
+    // Check session health
+    checkSessionHealth().then(healthy => {
+        if (healthy) {
+            console.log('Session is healthy');
+        }
+    });
+    
+    // Auto-generate plan if not available
+    if (typeof weeklyPlanData !== 'undefined' && weeklyPlanData.length === 0) {
+        generatePlan();
+    }
+});
+
+</script>
+
+<style>
+/* Enhanced styling for the new components */
+.topics-container .badge {
+    transition: all 0.2s ease;
+}
+
+.topics-container .badge:hover {
+    transform: scale(1.05);
+}
+
+.week-description-section,
+.support-resources-section,
+.teaching-notes-section {
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 1rem;
+    background-color: #f8f9fa;
+}
+
+.file-upload-area {
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.file-upload-area:hover {
+    background-color: #f8f9fa !important;
+    border-color: #007bff !important;
+}
+
+.uploaded-file-item {
+    transition: all 0.3s ease;
+    background-color: #f8f9fa;
+}
+
+.uploaded-file-item:hover {
+    background-color: #e9ecef;
+    transform: translateX(5px);
+}
+
+.cursor-pointer {
+    cursor: pointer;
+}
+
+.form-check-label {
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+
+.form-check-label:hover {
+    color: #007bff;
+}
+
+.week-card {
+    border-left: 4px solid #007bff;
+    transition: all 0.3s ease;
+}
+
+.week-card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    transform: translateY(-2px);
+}
+
+.week-title {
+    font-weight: bold;
+    border: 1px solid #e9ecef;
+    background: #f8f9fa;
+    font-size: 1em;
+    padding: 5px 10px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.week-title:focus {
+    background: white;
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0,123,255,0.25);
+}
+
+.week-description,
+.teaching-notes {
+    border: 1px solid #e9ecef;
+    border-radius: 4px;
+    transition: border-color 0.2s ease;
+}
+
+.week-description:focus,
+.teaching-notes:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0,123,255,0.25);
+}
+
+.lo-item {
+    transition: all 0.2s ease;
+}
+
+.lo-item:hover {
+    background-color: #e9ecef !important;
+    transform: translateX(5px);
+}
+
+.assessment-item {
+    background-color: #f8f9fa;
+    transition: all 0.2s ease;
+}
+
+.assessment-item:hover {
+    background-color: #e9ecef;
+    transform: translateX(5px);
+}
+
+.learning-outcomes-list {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.badge.bg-outline-primary {
+    color: #007bff;
+    border: 1px solid #007bff;
+    background: transparent;
+}
+
+.form-check-label {
+    font-size: 0.9em;
+    line-height: 1.4;
+}
+
+.input-group .form-control {
+    border-right: none;
+}
+
+.input-group .btn-outline-danger {
+    border-left: none;
+    padding: 0.375rem 0.5rem;
+}
+
+.input-group .btn-outline-danger:hover {
+    background-color: #dc3545;
+    border-color: #dc3545;
+    color: white;
+}
+
+.support-resources-section h6 {
+    color: #495057;
+    border-bottom: 2px solid #007bff;
+    padding-bottom: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.teaching-notes-section h6 {
+    color: #495057;
+    border-bottom: 2px solid #28a745;
+    padding-bottom: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .week-title {
+        width: 100% !important;
+        margin-top: 10px;
+        display: block !important;
+    }
+    
+    .card-header .row {
+        flex-direction: column;
+    }
+    
+    .card-header .col-auto {
+        margin-top: 10px;
+        align-self: flex-start;
+    }
+    
+    .learning-outcomes-list {
+        max-height: 200px;
+    }
+    
+    .file-upload-area {
+        padding: 1rem;
+    }
+    
+    .uploaded-file-item {
+        flex-direction: column;
+        align-items: flex-start !important;
+    }
+    
+    .file-actions {
+        margin-top: 0.5rem;
+        width: 100%;
+    }
+}
+
+/* Animation for new elements */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.week-description-section,
+.support-resources-section,
+.teaching-notes-section {
+    animation: fadeIn 0.3s ease;
+}
+
+/* File drag and drop styling */
+.file-upload-area.border-primary {
+    border-color: #007bff !important;
+    background-color: rgba(0, 123, 255, 0.1) !important;
+}
+
+/* Modal enhancements */
+.modal-body pre {
+    font-size: 0.9em;
+    line-height: 1.4;
+}
+
+/* Button hover effects */
+.btn-outline-success:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(40, 167, 69, 0.2);
+}
+
+.btn-outline-danger:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(220, 53, 69, 0.2);
+}
+
+/* Focus states for accessibility */
+.form-check-input:focus {
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+input.form-control:focus,
+textarea.form-control:focus,
+select.form-control:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+</style>
+{% endblock %}

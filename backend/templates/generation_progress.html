@@ -1,0 +1,2163 @@
+{% extends "base.html" %}
+
+{% block title %}Generating Materials - AI Course Generator{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <!-- Module Information Header with Status -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <h4><i class="fas fa-cogs me-2 text-primary"></i>Generating Course Materials</h4>
+                        <p class="mb-0" id="moduleInfo">
+                            <span class="text-muted">Preparing generation for: </span>
+                            <span class="fw-bold" id="moduleTitle">Loading...</span>
+                        </p>
+                        <div class="mt-2">
+                            <span class="badge" id="statusBadge">Initializing</span>
+                            <span class="badge bg-info ms-1" id="sessionBadge">Session: {{ session_id[:8] }}...</span>
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <div class="generation-controls">
+                            <button class="btn btn-warning btn-sm me-2" onclick="pauseGeneration()" id="pauseBtn" style="display: none;" title="Pause Generation">
+                                <i class="fas fa-pause me-1"></i> Pause
+                            </button>
+                            <button class="btn btn-success btn-sm me-2" onclick="resumeGeneration()" id="resumeBtn" style="display: none;" title="Resume Generation">
+                                <i class="fas fa-play me-1"></i> Resume
+                            </button>
+                            <button class="btn btn-danger btn-sm" onclick="stopGeneration()" id="stopBtn" style="display: none;" title="Stop Generation">
+                                <i class="fas fa-stop me-1"></i> Stop
+                            </button>
+                            <button class="btn btn-info btn-sm" onclick="refreshStatus()" id="refreshBtn" title="Refresh Status">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Overall Progress Card -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5><i class="fas fa-chart-line me-2"></i>Overall Progress</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="progress mb-3 shadow-sm" style="height: 30px;">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary" 
+                                 id="overallProgress" role="progressbar" style="width: 0%" 
+                                 aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                                <span id="progressText" class="fw-bold fs-6">0% (0/0)</span>
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-between text-muted small">
+                            <span><i class="fas fa-play-circle me-1"></i>Started: <span id="startTime">--:--</span></span>
+                            <span><i class="fas fa-clock me-1"></i>Remaining: <span id="estimatedTime">Calculating...</span></span>
+                            <span><i class="fas fa-tachometer-alt me-1"></i>Speed: <span id="generationSpeed">-- items/min</span></span>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="row text-center">
+                            <div class="col-6">
+                                <div class="stat-card bg-success text-white p-2 rounded">
+                                    <h3 class="mb-0" id="completedCount">0</h3>
+                                    <small>Completed</small>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="stat-card bg-secondary text-white p-2 rounded">
+                                    <h3 class="mb-0" id="totalCount">0</h3>
+                                    <small>Total</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Current Week Progress Card -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 id="currentWeekTitle"><i class="fas fa-calendar-week me-2"></i>Preparing generation...</h5>
+            </div>
+            <div class="card-body">
+                <div class="progress mb-3 shadow-sm" style="height: 20px;">
+                    <div class="progress-bar bg-gradient" id="weekProgress" style="width: 0%; background: linear-gradient(90deg, #28a745, #20c997);"></div>
+                </div>
+                <div class="current-task-container bg-light p-3 rounded">
+                    <div class="d-flex align-items-center">
+                        <div class="spinner-border spinner-border-sm text-primary me-3" id="taskSpinner" style="display: none;"></div>
+                        <div class="flex-grow-1">
+                            <div class="fw-bold" id="currentTask">Initializing generation process...</div>
+                            <small class="text-muted" id="taskDetails">Please wait while we prepare your materials</small>
+                        </div>
+                        <div class="task-progress" id="taskProgress" style="display: none;">
+                            <div class="progress" style="width: 100px; height: 15px;">
+                                <div class="progress-bar bg-info" id="taskProgressBar" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Weekly Progress Overview Grid -->
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5><i class="fas fa-calendar-alt me-2"></i>Weekly Progress Overview</h5>
+                <small class="text-muted" id="weeklyProgressSummary">0 of 0 weeks completed</small>
+            </div>
+            <div class="card-body">
+                <div id="weeklyOverview" class="row g-2">
+                    <!-- Week progress cards will be dynamically added here -->
+                    <div class="col-12 text-center py-4" id="weeklyOverviewLoader">
+                        <div class="spinner-border text-primary me-2"></div>
+                        <span class="text-muted">Loading weekly overview...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Live Activity Log -->
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5><i class="fas fa-list me-2"></i>Live Activity Log</h5>
+                <div class="log-controls">
+                    <button class="btn btn-outline-secondary btn-sm me-1" onclick="toggleAutoScroll()" id="autoScrollBtn" title="Toggle Auto-scroll">
+                        <i class="fas fa-scroll me-1"></i> Auto-scroll: <span id="autoScrollStatus">ON</span>
+                    </button>
+                    <button class="btn btn-outline-secondary btn-sm me-1" onclick="exportLog()" title="Export Log">
+                        <i class="fas fa-download"></i>
+                    </button>
+                    <button class="btn btn-outline-danger btn-sm" onclick="clearLog()" title="Clear Log">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div id="generationLog" class="generation-log">
+                    <div class="log-entry log-info p-2 mb-1">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <span class="log-message">🔄 System initialized - ready to begin generation</span>
+                            <small class="text-muted ms-2">${new Date().toLocaleTimeString()}</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Generated Materials Display -->
+        <div class="card mb-4" id="completedMaterialsCard" style="display: none;">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5><i class="fas fa-check-circle text-success me-2"></i>Generated Materials</h5>
+                <div>
+                    <span class="badge bg-success me-2" id="materialsBadge">0 files</span>
+                    <button class="btn btn-outline-primary btn-sm" onclick="toggleMaterialsView()" id="materialsViewBtn">
+                        <i class="fas fa-th"></i> Grid View
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div id="completedMaterialsList" class="row materials-grid-view">
+                    <!-- Completed materials will be dynamically added here -->
+                </div>
+                <div id="completedMaterialsTable" class="materials-table-view" style="display: none;">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Material</th>
+                                    <th>Week</th>
+                                    <th>Type</th>
+                                    <th>Size</th>
+                                    <th>Generated</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="materialsTableBody">
+                                <!-- Table rows will be added here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Final Completion Summary -->
+        <div class="card border-success" id="finalActionsCard" style="display: none;">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="fas fa-trophy me-2"></i>Generation Complete!</h5>
+            </div>
+            <div class="card-body">
+                <!-- Completion Statistics -->
+                <div class="completion-summary mb-4 p-4 rounded">
+                    <div class="row text-center">
+                        <div class="col-md-2 col-6 mb-3">
+                            <div class="stat-item">
+                                <h3 class="text-white mb-0" id="finalWeekCount">0</h3>
+                                <small class="text-white-50">Weeks Completed</small>
+                            </div>
+                        </div>
+                        <div class="col-md-2 col-6 mb-3">
+                            <div class="stat-item">
+                                <h3 class="text-white mb-0" id="finalMaterialCount">0</h3>
+                                <small class="text-white-50">Materials Generated</small>
+                            </div>
+                        </div>
+                        <div class="col-md-2 col-6 mb-3">
+                            <div class="stat-item">
+                                <h3 class="text-white mb-0" id="finalDuration">0m</h3>
+                                <small class="text-white-50">Total Time</small>
+                            </div>
+                        </div>
+                        <div class="col-md-2 col-6 mb-3">
+                            <div class="stat-item">
+                                <h3 class="text-white mb-0" id="finalSize">0 MB</h3>
+                                <small class="text-white-50">Total Size</small>
+                            </div>
+                        </div>
+                        <div class="col-md-2 col-6 mb-3">
+                            <div class="stat-item">
+                                <h3 class="text-white mb-0" id="finalSuccessRate">100%</h3>
+                                <small class="text-white-50">Success Rate</small>
+                            </div>
+                        </div>
+                        <div class="col-md-2 col-6 mb-3">
+                            <div class="stat-item">
+                                <h3 class="text-white mb-0" id="finalSpeed">0/min</h3>
+                                <small class="text-white-50">Avg Speed</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Action Buttons -->
+                <div class="text-center">
+                    <div class="btn-group-vertical btn-group-lg d-md-none mb-3">
+                        <button class="btn btn-primary" onclick="downloadAll()">
+                            <i class="fas fa-download me-2"></i>Download All Materials
+                        </button>
+                        <button class="btn btn-outline-primary" onclick="selectiveDownload()">
+                            <i class="fas fa-list me-2"></i>Selective Download
+                        </button>
+                        <button class="btn btn-outline-success" onclick="generateMore()">
+                            <i class="fas fa-plus me-2"></i>Generate Additional Materials
+                        </button>
+                    </div>
+                    
+                    <div class="d-none d-md-block">
+                        <button class="btn btn-primary btn-lg me-3" onclick="downloadAll()">
+                            <i class="fas fa-download me-2"></i>Download All Materials
+                        </button>
+                        <button class="btn btn-outline-primary btn-lg me-3" onclick="selectiveDownload()">
+                            <i class="fas fa-list me-2"></i>Selective Download
+                        </button>
+                        <button class="btn btn-outline-success btn-lg" onclick="generateMore()">
+                            <i class="fas fa-plus me-2"></i>Generate More
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="row mt-4">
+                    <div class="col-md-4 mb-2">
+                        <button class="btn btn-outline-info w-100" onclick="previewMaterials()">
+                            <i class="fas fa-eye me-2"></i>Preview Materials
+                        </button>
+                    </div>
+                    <div class="col-md-4 mb-2">
+                        <button class="btn btn-outline-secondary w-100" onclick="exportLog()">
+                            <i class="fas fa-file-export me-2"></i>Export Activity Log
+                        </button>
+                    </div>
+                    <div class="col-md-4 mb-2">
+                        <button class="btn btn-outline-warning w-100" onclick="shareResults()">
+                            <i class="fas fa-share me-2"></i>Share Results
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modals for various actions -->
+<!-- Pause Confirmation Modal -->
+<div class="modal fade" id="pauseModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title"><i class="fas fa-pause me-2"></i>Pause Generation</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-3">Are you sure you want to pause the generation process?</p>
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>What happens when paused:</strong>
+                    <ul class="mb-0 mt-2">
+                        <li>Current material generation will complete</li>
+                        <li>No new materials will start</li>
+                        <li>All progress is saved</li>
+                        <li>You can resume at any time</li>
+                    </ul>
+                </div>
+                <div class="current-generation-info" id="pauseCurrentInfo">
+                    <small class="text-muted">Currently generating: <span id="pauseCurrentTask">--</span></small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-warning" onclick="confirmPause()">
+                    <i class="fas fa-pause me-1"></i> Yes, Pause Generation
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Stop Confirmation Modal -->
+<div class="modal fade" id="stopModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="fas fa-stop me-2"></i>Stop Generation</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p><strong>⚠️ Warning:</strong> This will permanently stop the generation process.</p>
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>What happens when stopped:</strong>
+                    <ul class="mb-0 mt-2">
+                        <li>Generation will stop immediately</li>
+                        <li>Completed materials are preserved</li>
+                        <li>Incomplete materials will be lost</li>
+                        <li>Process cannot be resumed (but can be restarted)</li>
+                    </ul>
+                </div>
+                <div class="progress-summary bg-light p-3 rounded">
+                    <h6>Current Progress:</h6>
+                    <div class="row">
+                        <div class="col-6">
+                            <strong id="stopCompletedCount">0</strong> materials completed
+                        </div>
+                        <div class="col-6">
+                            <strong id="stopRemainingCount">0</strong> materials remaining
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" onclick="confirmStop()">
+                    <i class="fas fa-stop me-1"></i> Yes, Stop Generation
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Selective Download Modal -->
+<div class="modal fade" id="selectiveDownloadModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-download me-2"></i>Selective Download</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-calendar-week me-2"></i>Select by Week:</h6>
+                        <div class="selection-group border rounded p-3" id="weekDownloadOptions">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="selectAllWeeks" onchange="toggleAllWeeks()">
+                                <label class="form-check-label fw-bold" for="selectAllWeeks">Select All Weeks</label>
+                            </div>
+                            <hr>
+                            <!-- Week options will be populated here -->
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-file-alt me-2"></i>Select by Material Type:</h6>
+                        <div class="selection-group border rounded p-3" id="materialTypeOptions">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="selectAllTypes" onchange="toggleAllTypes()">
+                                <label class="form-check-label fw-bold" for="selectAllTypes">Select All Types</label>
+                            </div>
+                            <hr>
+                            <!-- Material type options will be populated here -->
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <span id="selectionSummary">No items selected</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="executeSelectiveDownload()" id="executeDownloadBtn" disabled>
+                    <i class="fas fa-download me-2"></i>Download Selected
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Resume Detection Modal -->
+<div class="modal fade" id="resumeDetectionModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title"><i class="fas fa-info-circle me-2"></i>Previous Session Detected</h5>
+            </div>
+            <div class="modal-body">
+                <p>We found a previous generation session for this module.</p>
+                <div class="session-info bg-light p-3 rounded mb-3">
+                    <h6>Session Details:</h6>
+                    <ul class="mb-0">
+                        <li><strong>Status:</strong> <span id="previousStatus">--</span></li>
+                        <li><strong>Completed:</strong> <span id="previousCompleted">0</span> of <span id="previousTotal">0</span> materials</li>
+                        <li><strong>Last Activity:</strong> <span id="previousLastActivity">--</span></li>
+                    </ul>
+                </div>
+                <p>What would you like to do?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-warning" onclick="startFresh()">
+                    <i class="fas fa-sync me-1"></i> Start Fresh
+                </button>
+                <button type="button" class="btn btn-success" onclick="resumeSession()">
+                    <i class="fas fa-play me-1"></i> Resume Previous Session
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Hidden inputs -->
+<input type="hidden" id="sessionId" value="{{ session_id }}">
+<input type="hidden" id="selectedMaterials" value="{{ selected_materials }}">
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Enhanced Global State Management
+let generationState = {
+    sessionId: document.getElementById('sessionId').value,
+    selectedMaterials: document.getElementById('selectedMaterials').value.split(',').filter(m => m.trim()),
+    status: 'initializing',
+    startTime: null,
+    pausedTime: null,
+    totalWeeks: 0,
+    currentWeek: 0,
+    totalMaterials: 0,
+    completedMaterials: 0,
+    failedMaterials: 0,
+    completedFiles: [],
+    weekProgress: {},
+    autoScroll: true,
+    eventSource: null,
+    materialsView: 'grid', // grid or table
+    reconnectAttempts: 0,
+    maxReconnectAttempts: 5,
+    lastHeartbeat: null,
+    errors: []
+};
+
+// Initialize on page load with session detection
+document.addEventListener('DOMContentLoaded', function() {
+    checkExistingSession();
+});
+
+// 12. Check for existing materials before regeneration
+async function checkExistingSession() {
+    try {
+        const response = await fetch(`/api/check-session-status/${generationState.sessionId}`);
+        const sessionInfo = await response.json();
+        
+        if (sessionInfo.exists && sessionInfo.has_materials) {
+            showResumeDetectionModal(sessionInfo);
+        } else {
+            initializeGeneration();
+        }
+    } catch (error) {
+        addLogEntry('⚠️ Could not check existing session, starting fresh', 'warning');
+        initializeGeneration();
+    }
+}
+
+function showResumeDetectionModal(sessionInfo) {
+    document.getElementById('previousStatus').textContent = sessionInfo.status || 'Unknown';
+    document.getElementById('previousCompleted').textContent = sessionInfo.completed_count || 0;
+    document.getElementById('previousTotal').textContent = sessionInfo.total_count || 0;
+    document.getElementById('previousLastActivity').textContent = 
+        sessionInfo.last_activity ? new Date(sessionInfo.last_activity).toLocaleString() : 'Unknown';
+    
+    const modal = new bootstrap.Modal(document.getElementById('resumeDetectionModal'));
+    modal.show();
+}
+
+function startFresh() {
+    bootstrap.Modal.getInstance(document.getElementById('resumeDetectionModal')).hide();
+    clearExistingMaterials().then(() => {
+        initializeGeneration();
+    });
+}
+
+function resumeSession() {
+    bootstrap.Modal.getInstance(document.getElementById('resumeDetectionModal')).hide();
+    loadExistingSession();
+}
+
+async function clearExistingMaterials() {
+    try {
+        await fetch(`/api/clear-session/${generationState.sessionId}`, { method: 'POST' });
+        addLogEntry('🗑️ Previous session cleared, starting fresh', 'info');
+    } catch (error) {
+        addLogEntry('⚠️ Could not clear previous session: ' + error.message, 'warning');
+    }
+}
+
+async function loadExistingSession() {
+    try {
+        const response = await fetch(`/api/load-session/${generationState.sessionId}`);
+        const sessionData = await response.json();
+        
+        // Restore state from session
+        generationState.totalWeeks = sessionData.total_weeks || 0;
+        generationState.totalMaterials = sessionData.total_materials || 0;
+        generationState.completedMaterials = sessionData.completed_count || 0;
+        generationState.completedFiles = sessionData.completed_files || [];
+        generationState.status = sessionData.status || 'paused';
+        
+        // Update UI with existing data
+        updateUIFromSessionData(sessionData);
+        
+        // Determine next action based on status
+        if (sessionData.status === 'paused') {
+            setupResumeState();
+        } else if (sessionData.status === 'completed') {
+            handleGenerationComplete();
+        } else {
+            // Resume generation
+            resumeGenerationProcess();
+        }
+        
+        addLogEntry('🔄 Previous session loaded successfully', 'success');
+        
+    } catch (error) {
+        addLogEntry('❌ Error loading session: ' + error.message, 'error');
+        initializeGeneration();
+    }
+}
+
+// 1. Enhanced Live Progress Tracking
+async function initializeGeneration() {
+    updateStatusBadge('initializing', 'bg-secondary');
+    addLogEntry('🚀 Initializing course material generation system...', 'info');
+    
+    try {
+        // Save weekly plan first
+        await saveWeeklyPlan();
+        
+        // Start the generation process
+        const response = await fetch('/api/start-generation', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                session_id: generationState.sessionId,
+                materials: generationState.selectedMaterials
+            })
+        });
+
+        if (response.ok) {
+            const result = await response.json();
+            generationState.totalWeeks = result.total_weeks;
+            generationState.totalMaterials = result.total_materials;
+            generationState.startTime = new Date();
+            
+            updateTotalCount();
+            createWeeklyOverview(); // 2. Visual Week Overview
+            startProgressListener();
+            showGenerationControls(); // 3. Show Pause/Resume/Stop Controls
+            updateStartTime();
+            updateStatusBadge('running', 'bg-success');
+            
+            addLogEntry(`📊 Generation initialized: ${result.total_weeks} weeks, ${result.total_materials} materials`, 'success');
+            
+        } else {
+            throw new Error('Failed to start generation');
+        }
+    } catch (error) {
+        addLogEntry('❌ Error starting generation: ' + error.message, 'error');
+        handleGenerationError(error); // 8. Error Handling
+    }
+}
+
+function startProgressListener() {
+    if (generationState.eventSource) {
+        generationState.eventSource.close();
+    }
+    
+    generationState.eventSource = new EventSource(`/api/generation-progress/${generationState.sessionId}`);
+    generationState.status = 'running';
+    generationState.reconnectAttempts = 0;
+    
+    generationState.eventSource.onmessage = function(event) {
+        try {
+            const data = JSON.parse(event.data);
+            generationState.lastHeartbeat = new Date();
+            handleProgressUpdate(data);
+        } catch (error) {
+            addLogEntry('⚠️ Error parsing progress data: ' + error.message, 'warning');
+        }
+    };
+    
+    // 8. Enhanced Error Handling with reconnection
+    generationState.eventSource.onerror = function(event) {
+        addLogEntry('🔌 Connection lost - attempting to reconnect...', 'warning');
+        
+        if (generationState.reconnectAttempts < generationState.maxReconnectAttempts) {
+            generationState.reconnectAttempts++;
+            setTimeout(() => {
+                if (generationState.status === 'running') {
+                    addLogEntry(`🔄 Reconnection attempt ${generationState.reconnectAttempts}/${generationState.maxReconnectAttempts}`, 'info');
+                    startProgressListener();
+                }
+            }, Math.pow(2, generationState.reconnectAttempts) * 1000); // Exponential backoff
+        } else {
+            addLogEntry('❌ Maximum reconnection attempts reached. Please refresh the page.', 'error');
+            updateStatusBadge('connection_lost', 'bg-danger');
+        }
+    };
+    
+    generationState.eventSource.onopen = function(event) {
+        addLogEntry('✅ Connection established', 'success');
+        generationState.reconnectAttempts = 0;
+    };
+}
+
+function handleProgressUpdate(data) {
+    switch (data.type) {
+        case 'generation_start':
+            addLogEntry(`🎯 Starting generation for "${data.module_title}"`, 'info');
+            updateModuleInfo(data.module_title);
+            break;
+            
+        case 'week_start':
+            handleWeekStart(data);
+            break;
+            
+        case 'material_start':
+            handleMaterialStart(data);
+            break;
+            
+        case 'material_progress':
+            handleMaterialProgress(data);
+            break;
+            
+        case 'material_complete':
+            handleMaterialComplete(data);
+            break;
+            
+        case 'week_complete':
+            handleWeekComplete(data);
+            break;
+            
+        case 'generation_complete':
+            handleGenerationComplete();
+            break;
+            
+        case 'error':
+            handleError(data);
+            break;
+            
+        case 'paused':
+            handlePaused();
+            break;
+            
+        case 'stopped':
+            handleStopped();
+            break;
+            
+        case 'heartbeat':
+            // Keep connection alive
+            generationState.lastHeartbeat = new Date();
+            break;
+    }
+    
+    updateOverallProgress();
+    updateEstimatedTime(); // 6. Estimated Time Remaining
+    updateGenerationSpeed();
+}
+
+function handleWeekStart(data) {
+    generationState.currentWeek = data.week_number;
+    updateCurrentWeek(data.week_number, data.week_title);
+    addLogEntry(`📚 Starting Week ${data.week_number}: ${data.week_title}`, 'info');
+    updateWeekProgress(data.week_number, 0, 'started');
+    showTaskSpinner();
+    updateWeeklyProgressSummary();
+}
+
+function handleMaterialStart(data) {
+    const taskText = `Generating ${data.material_name}`;
+    updateCurrentTask(taskText, `Week ${data.week_number} - ${data.material_type}`);
+    addLogEntry(`🔄 ${taskText} for Week ${data.week_number}`, 'info');
+    showTaskProgress();
+}
+
+function handleMaterialProgress(data) {
+    if (data.progress !== undefined) {
+        updateCurrentTask(data.material_name, `${data.progress}% complete`);
+        updateTaskProgress(data.progress);
+    }
+}
+
+function handleMaterialComplete(data) {
+    generationState.completedMaterials++;
+    generationState.completedFiles.push({
+        ...data,
+        completedAt: new Date().toISOString(),
+        size: data.file_size || 0
+    });
+    
+    addLogEntry(`✅ ${data.material_name} completed successfully`, 'success');
+    addCompletedMaterial(data); // 5. Completed Materials Display
+    updateCompletedCount();
+    hideTaskProgress();
+    
+    // Update week progress
+    updateWeekProgress(data.week_number, calculateWeekProgress(data.week_number), 'progress');
+}
+
+function handleWeekComplete(data) {
+    addLogEntry(`🎉 Week ${data.week_number} completed - all materials generated!`, 'success');
+    updateWeekProgress(data.week_number, 100, 'completed');
+    hideTaskSpinner();
+    updateWeeklyProgressSummary();
+}
+
+function handleGenerationComplete() {
+    generationState.status = 'completed';
+    updateStatusBadge('completed', 'bg-success');
+    addLogEntry('🏆 All materials generated successfully! Redirecting to review...', 'success');
+    
+    // Calculate final statistics
+    calculateFinalStatistics();
+    
+    if (generationState.eventSource) {
+        generationState.eventSource.close();
+    }
+    
+    // Redirect to materials review page after 3 seconds
+    setTimeout(() => {
+        window.location.href = `/materials-review/${generationState.sessionId}`;
+    }, 3000);
+}
+
+//function handleGenerationComplete() {
+//    generationState.status = 'completed';
+//    updateStatusBadge('completed', 'bg-success');
+//    addLogEntry('🏆 All materials generated successfully! Generation complete.', 'success');
+//    
+//    updateCurrentWeek(0, 'Generation Complete!');
+//    updateCurrentTask('All materials ready for download', 'Click the buttons below to download your materials');
+//    hideGenerationControls();
+//    showFinalActions(); // 10. Final Summary
+//    updateWeeklyProgressSummary();
+//    
+//    if (generationState.eventSource) {
+//        generationState.eventSource.close();
+//    }
+//    
+//    // Calculate final statistics
+//    calculateFinalStatistics();
+//}
+
+function handleError(data) {
+    generationState.errors.push({
+        message: data.message,
+        timestamp: new Date().toISOString(),
+        context: data.context || 'Unknown'
+    });
+    generationState.failedMaterials++;
+    
+    addLogEntry(`❌ Error: ${data.message}`, 'error');
+    
+    if (data.critical) {
+        updateStatusBadge('error', 'bg-danger');
+        addLogEntry('🛑 Critical error encountered - generation may be unstable', 'error');
+    }
+}
+
+// 2. Visual Week Overview Implementation
+function createWeeklyOverview() {
+    const container = document.getElementById('weeklyOverview');
+    const loader = document.getElementById('weeklyOverviewLoader');
+    
+    container.innerHTML = '';
+    loader.style.display = 'none';
+    
+    for (let i = 1; i <= generationState.totalWeeks; i++) {
+        const weekCard = document.createElement('div');
+        weekCard.className = 'col-xl-2 col-lg-3 col-md-4 col-sm-6 col-6 mb-2';
+        weekCard.innerHTML = `
+            <div class="card week-overview-card h-100" id="week-${i}-overview">
+                <div class="card-body text-center p-2">
+                    <div class="week-number-badge mb-1">
+                        <span class="badge bg-light text-dark">Week ${i}</span>
+                    </div>
+                    <div class="week-status-icon mb-2">
+                        <i class="fas fa-clock text-muted fa-2x"></i>
+                    </div>
+                    <div class="week-progress mb-1">
+                        <div class="progress" style="height: 4px;">
+                            <div class="progress-bar" id="week-${i}-progress-bar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <small class="text-muted status-text">Pending</small>
+                </div>
+            </div>
+        `;
+        container.appendChild(weekCard);
+        
+        // Add click handler for week details
+        weekCard.addEventListener('click', () => showWeekDetails(i));
+    }
+    
+    updateWeeklyProgressSummary();
+}
+
+function updateWeekProgress(weekNumber, percentage, status) {
+    const weekCard = document.getElementById(`week-${weekNumber}-overview`);
+    const progressBar = document.getElementById(`week-${weekNumber}-progress-bar`);
+    
+    if (!weekCard) return;
+    
+    const icon = weekCard.querySelector('.week-status-icon i');
+    const statusText = weekCard.querySelector('.status-text');
+    const cardBody = weekCard.querySelector('.card-body');
+    
+    // Update progress bar
+    if (progressBar) {
+        progressBar.style.width = percentage + '%';
+    }
+    
+    // Update visual status
+    switch (status) {
+        case 'started':
+            icon.className = 'fas fa-spinner fa-spin text-primary fa-2x';
+            statusText.textContent = 'In Progress';
+            cardBody.className = 'card-body text-center p-2 border-primary';
+            progressBar.className = 'progress-bar bg-info';
+            break;
+        case 'progress':
+            icon.className = 'fas fa-cog fa-spin text-info fa-2x';
+            statusText.textContent = `${Math.round(percentage)}%`;
+            progressBar.className = 'progress-bar bg-info';
+            break;
+        case 'completed':
+            icon.className = 'fas fa-check-circle text-success fa-2x';
+            statusText.textContent = 'Complete';
+            cardBody.className = 'card-body text-center p-2 border-success';
+            progressBar.className = 'progress-bar bg-success';
+            progressBar.style.width = '100%';
+            break;
+    }
+    
+    // Store progress for calculations
+    generationState.weekProgress[weekNumber] = { percentage, status };
+}
+
+// 3. Pause/Resume/Stop Controls Implementation
+function showGenerationControls() {
+    document.getElementById('pauseBtn').style.display = 'inline-block';
+    document.getElementById('stopBtn').style.display = 'inline-block';
+}
+
+function hideGenerationControls() {
+    document.getElementById('pauseBtn').style.display = 'none';
+    document.getElementById('resumeBtn').style.display = 'none';
+    document.getElementById('stopBtn').style.display = 'none';
+}
+
+function pauseGeneration() {
+    // Update modal with current info
+    document.getElementById('pauseCurrentTask').textContent = 
+        document.getElementById('currentTask').textContent;
+    
+    const modal = new bootstrap.Modal(document.getElementById('pauseModal'));
+    modal.show();
+}
+
+function confirmPause() {
+    fetch(`/api/pause-generation/${generationState.sessionId}`, { method: 'POST' })
+        .then(response => {
+            if (response.ok) {
+                generationState.status = 'paused';
+                handlePaused();
+                bootstrap.Modal.getInstance(document.getElementById('pauseModal')).hide();
+            } else {
+                throw new Error('Failed to pause generation');
+            }
+        })
+        .catch(error => {
+            addLogEntry('❌ Error pausing generation: ' + error.message, 'error');
+        });
+}
+
+function resumeGeneration() {
+    updateStatusBadge('resuming', 'bg-warning');
+    fetch(`/api/resume-generation/${generationState.sessionId}`, { method: 'POST' })
+        .then(response => {
+            if (response.ok) {
+                generationState.status = 'running';
+                startProgressListener();
+                setupRunningState();
+                addLogEntry('▶️ Generation resumed successfully', 'success');
+            } else {
+                throw new Error('Failed to resume generation');
+            }
+        })
+        .catch(error => {
+            addLogEntry('❌ Error resuming generation: ' + error.message, 'error');
+        });
+}
+
+function stopGeneration() {
+    // Update modal with current progress
+    document.getElementById('stopCompletedCount').textContent = generationState.completedMaterials;
+    document.getElementById('stopRemainingCount').textContent = 
+        generationState.totalMaterials - generationState.completedMaterials;
+    
+    const modal = new bootstrap.Modal(document.getElementById('stopModal'));
+    modal.show();
+}
+
+function confirmStop() {
+    fetch(`/api/stop-generation/${generationState.sessionId}`, { method: 'POST' })
+        .then(response => {
+            if (response.ok) {
+                generationState.status = 'stopped';
+                handleStopped();
+                bootstrap.Modal.getInstance(document.getElementById('stopModal')).hide();
+            } else {
+                throw new Error('Failed to stop generation');
+            }
+        })
+        .catch(error => {
+            addLogEntry('❌ Error stopping generation: ' + error.message, 'error');
+        });
+}
+
+function handlePaused() {
+    generationState.pausedTime = new Date();
+    updateStatusBadge('paused', 'bg-warning');
+    addLogEntry('⏸️ Generation paused by user - progress saved', 'warning');
+    updateCurrentTask('Generation Paused', 'Click Resume to continue or Stop to end');
+    
+    setupPausedState();
+    
+    if (generationState.eventSource) {
+        generationState.eventSource.close();
+    }
+}
+
+function handleStopped() {
+    updateStatusBadge('stopped', 'bg-danger');
+    addLogEntry('⏹️ Generation stopped by user - completed materials preserved', 'warning');
+    updateCurrentTask('Generation Stopped', 'You can still download completed materials');
+    hideGenerationControls();
+    showFinalActions();
+    
+    if (generationState.eventSource) {
+        generationState.eventSource.close();
+    }
+}
+
+function setupRunningState() {
+    document.getElementById('pauseBtn').style.display = 'inline-block';
+    document.getElementById('resumeBtn').style.display = 'none';
+    document.getElementById('stopBtn').style.display = 'inline-block';
+}
+
+function setupPausedState() {
+    document.getElementById('pauseBtn').style.display = 'none';
+    document.getElementById('resumeBtn').style.display = 'inline-block';
+    document.getElementById('stopBtn').style.display = 'inline-block';
+}
+
+function setupResumeState() {
+    setupPausedState();
+    updateStatusBadge('paused', 'bg-warning');
+    updateCurrentTask('Ready to Resume', 'Click Resume to continue generation');
+    addLogEntry('⏸️ Session in paused state - ready to resume', 'info');
+}
+
+// 4. Detailed Activity Log with timestamps
+function addLogEntry(message, type = 'info', details = null) {
+    const logContainer = document.getElementById('generationLog');
+    const timestamp = new Date().toLocaleTimeString();
+    const fullTimestamp = new Date().toISOString();
+    
+    const logEntry = document.createElement('div');
+    logEntry.className = `log-entry log-${type} mb-1 p-2 border-start border-3`;
+    logEntry.setAttribute('data-timestamp', fullTimestamp);
+    
+    let entryHTML = `
+        <div class="d-flex justify-content-between align-items-start">
+            <span class="log-message flex-grow-1">${message}</span>
+            <small class="text-muted ms-2 flex-shrink-0">${timestamp}</small>
+        </div>
+    `;
+    
+    if (details) {
+        entryHTML += `<div class="log-details mt-1"><small class="text-muted">${details}</small></div>`;
+    }
+    
+    logEntry.innerHTML = entryHTML;
+    
+    logContainer.appendChild(logEntry);
+    
+    // 9. Auto-scroll functionality
+    if (generationState.autoScroll) {
+        logContainer.scrollTop = logContainer.scrollHeight;
+    }
+    
+    // Limit log entries to prevent memory issues (keep last 500 entries)
+    while (logContainer.children.length > 500) {
+        logContainer.removeChild(logContainer.firstChild);
+    }
+}
+
+// 9. Auto-scroll Controls
+function toggleAutoScroll() {
+    generationState.autoScroll = !generationState.autoScroll;
+    const statusSpan = document.getElementById('autoScrollStatus');
+    const btn = document.getElementById('autoScrollBtn');
+    
+    statusSpan.textContent = generationState.autoScroll ? 'ON' : 'OFF';
+    btn.className = generationState.autoScroll 
+        ? 'btn btn-outline-secondary btn-sm me-1'
+        : 'btn btn-secondary btn-sm me-1';
+}
+
+function clearLog() {
+    if (confirm('Are you sure you want to clear the activity log?')) {
+        document.getElementById('generationLog').innerHTML = '';
+        addLogEntry('📄 Activity log cleared', 'info');
+    }
+}
+
+function exportLog() {
+    const logEntries = document.querySelectorAll('.log-entry');
+    let logText = `Course Material Generation Log\n`;
+    logText += `Session: ${generationState.sessionId}\n`;
+    logText += `Exported: ${new Date().toLocaleString()}\n`;
+    logText += '='.repeat(50) + '\n\n';
+    
+    logEntries.forEach(entry => {
+        const timestamp = entry.getAttribute('data-timestamp');
+        const message = entry.querySelector('.log-message').textContent;
+        const details = entry.querySelector('.log-details');
+        
+        logText += `${new Date(timestamp).toLocaleString()}: ${message}\n`;
+        if (details) {
+            logText += `    ${details.textContent}\n`;
+        }
+    });
+    
+    const blob = new Blob([logText], { type: 'text/plain' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `generation_log_${generationState.sessionId}.txt`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+    
+    addLogEntry('📋 Activity log exported', 'info');
+}
+
+// 5. Completed Materials Display with dual view modes
+function addCompletedMaterial(data) {
+    const completedCard = document.getElementById('completedMaterialsCard');
+    const gridList = document.getElementById('completedMaterialsList');
+    const tableBody = document.getElementById('materialsTableBody');
+    const materialsBadge = document.getElementById('materialsBadge');
+    
+    completedCard.style.display = 'block';
+    
+    // Add to grid view
+    const materialItem = document.createElement('div');
+    materialItem.className = 'col-lg-4 col-md-6 mb-3';
+    materialItem.innerHTML = `
+        <div class="card border-success material-item h-100">
+            <div class="card-body p-3">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <h6 class="card-title mb-0">${data.material_name}</h6>
+                    <button class="btn btn-sm btn-outline-primary" onclick="downloadSingleFile('${data.file_path}')" title="Download">
+                        <i class="fas fa-download"></i>
+                    </button>
+                </div>
+                <div class="mb-2">
+                    <span class="badge bg-primary me-1">Week ${data.week_number}</span>
+                    <span class="badge bg-secondary">${data.file_format}</span>
+                    ${data.file_size ? `<span class="badge bg-info">${formatFileSize(data.file_size)}</span>` : ''}
+                </div>
+                <div class="d-flex justify-content-between align-items-center">
+                    <small class="text-muted">${new Date().toLocaleTimeString()}</small>
+                    <div class="material-actions">
+                        <button class="btn btn-sm btn-outline-secondary me-1" onclick="previewMaterial('${data.file_path}')" title="Preview">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-info" onclick="showMaterialInfo('${data.material_name}')" title="Info">
+                            <i class="fas fa-info"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Add to table view
+    const tableRow = document.createElement('tr');
+    tableRow.innerHTML = `
+        <td>
+            <div class="d-flex align-items-center">
+                <i class="fas fa-file-alt text-primary me-2"></i>
+                <div>
+                    <div class="fw-bold">${data.material_name}</div>
+                    <small class="text-muted">${data.material_type}</small>
+                </div>
+            </div>
+        </td>
+        <td><span class="badge bg-primary">Week ${data.week_number}</span></td>
+        <td><span class="badge bg-secondary">${data.file_format}</span></td>
+        <td>${data.file_size ? formatFileSize(data.file_size) : '--'}</td>
+        <td><small>${new Date().toLocaleTimeString()}</small></td>
+        <td>
+            <div class="btn-group btn-group-sm">
+                <button class="btn btn-outline-primary" onclick="downloadSingleFile('${data.file_path}')" title="Download">
+                    <i class="fas fa-download"></i>
+                </button>
+                <button class="btn btn-outline-secondary" onclick="previewMaterial('${data.file_path}')" title="Preview">
+                    <i class="fas fa-eye"></i>
+                </button>
+            </div>
+        </td>
+    `;
+    
+    gridList.appendChild(materialItem);
+    tableBody.appendChild(tableRow);
+    
+    materialsBadge.textContent = `${generationState.completedFiles.length} files`;
+    
+    // Auto-scroll to show new material if enabled
+    if (generationState.autoScroll) {
+        materialItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+}
+
+function toggleMaterialsView() {
+    const gridView = document.getElementById('completedMaterialsList');
+    const tableView = document.getElementById('completedMaterialsTable');
+    const btn = document.getElementById('materialsViewBtn');
+    
+    if (generationState.materialsView === 'grid') {
+        gridView.style.display = 'none';
+        tableView.style.display = 'block';
+        generationState.materialsView = 'table';
+        btn.innerHTML = '<i class="fas fa-th"></i> Grid View';
+    } else {
+        gridView.style.display = 'block';
+        tableView.style.display = 'none';
+        generationState.materialsView = 'grid';
+        btn.innerHTML = '<i class="fas fa-table"></i> Table View';
+    }
+}
+
+// 6. Estimated Time Remaining calculation
+function updateEstimatedTime() {
+    if (!generationState.startTime || generationState.completedMaterials === 0) {
+        document.getElementById('estimatedTime').textContent = 'Calculating...';
+        return;
+    }
+    
+    const now = new Date();
+    const elapsed = (now - generationState.startTime) / 1000; // seconds
+    const rate = generationState.completedMaterials / elapsed; // materials per second
+    const remaining = generationState.totalMaterials - generationState.completedMaterials;
+    
+    if (remaining === 0) {
+        document.getElementById('estimatedTime').textContent = 'Complete!';
+        return;
+    }
+    
+    const estimatedSeconds = remaining / rate;
+    
+    if (estimatedSeconds < 60) {
+        document.getElementById('estimatedTime').textContent = `${Math.round(estimatedSeconds)}s`;
+    } else if (estimatedSeconds < 3600) {
+        const minutes = Math.round(estimatedSeconds / 60);
+        document.getElementById('estimatedTime').textContent = `${minutes}m`;
+    } else {
+        const hours = Math.floor(estimatedSeconds / 3600);
+        const minutes = Math.round((estimatedSeconds % 3600) / 60);
+        document.getElementById('estimatedTime').textContent = `${hours}h ${minutes}m`;
+    }
+}
+
+function updateGenerationSpeed() {
+    if (!generationState.startTime || generationState.completedMaterials === 0) {
+        document.getElementById('generationSpeed').textContent = '-- items/min';
+        return;
+    }
+    
+    const elapsed = (new Date() - generationState.startTime) / 60000; // minutes
+    const rate = generationState.completedMaterials / elapsed;
+    document.getElementById('generationSpeed').textContent = `${rate.toFixed(1)} items/min`;
+}
+
+// 7. Responsive Design helpers (handled via CSS and responsive classes)
+
+// 10. Final Summary with comprehensive statistics
+function showFinalActions() {
+    const finalCard = document.getElementById('finalActionsCard');
+    finalCard.style.display = 'block';
+    finalCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function calculateFinalStatistics() {
+    const duration = generationState.startTime 
+        ? Math.round((new Date() - generationState.startTime) / 60000) 
+        : 0;
+    
+    const totalSize = generationState.completedFiles.reduce((sum, file) => sum + (file.size || 0), 0);
+    const successRate = generationState.totalMaterials > 0 
+        ? Math.round((generationState.completedMaterials / generationState.totalMaterials) * 100)
+        : 100;
+    const avgSpeed = duration > 0 ? (generationState.completedMaterials / duration).toFixed(1) : 0;
+    
+    document.getElementById('finalWeekCount').textContent = Object.keys(generationState.weekProgress).length;
+    document.getElementById('finalMaterialCount').textContent = generationState.completedFiles.length;
+    document.getElementById('finalDuration').textContent = `${duration}m`;
+    document.getElementById('finalSize').textContent = formatFileSize(totalSize);
+    document.getElementById('finalSuccessRate').textContent = `${successRate}%`;
+    document.getElementById('finalSpeed').textContent = `${avgSpeed}/min`;
+}
+
+// UI Helper Functions
+function updateStatusBadge(status, className) {
+    const badge = document.getElementById('statusBadge');
+    badge.className = `badge ${className}`;
+    
+    const statusText = {
+        'initializing': 'Initializing',
+        'running': 'Running',
+        'paused': 'Paused',
+        'stopped': 'Stopped',
+        'completed': 'Completed',
+        'error': 'Error',
+        'connection_lost': 'Connection Lost',
+        'resuming': 'Resuming'
+    };
+    
+    badge.textContent = statusText[status] || status;
+}
+
+function updateModuleInfo(moduleTitle) {
+    document.getElementById('moduleTitle').textContent = moduleTitle;
+}
+
+function updateCurrentWeek(weekNumber, weekTitle) {
+    const title = weekNumber > 0 ? `Week ${weekNumber}: ${weekTitle}` : weekTitle;
+    document.getElementById('currentWeekTitle').innerHTML = `<i class="fas fa-calendar-week me-2"></i>${title}`;
+}
+
+function updateCurrentTask(task, details = '') {
+    document.getElementById('currentTask').textContent = task;
+    document.getElementById('taskDetails').textContent = details;
+}
+
+function updateOverallProgress() {
+    const percentage = generationState.totalMaterials > 0 
+        ? (generationState.completedMaterials / generationState.totalMaterials) * 100 
+        : 0;
+    
+    const progressBar = document.getElementById('overallProgress');
+    const progressText = document.getElementById('progressText');
+    
+    progressBar.style.width = percentage + '%';
+    progressBar.setAttribute('aria-valuenow', Math.round(percentage));
+    progressText.textContent = `${Math.round(percentage)}% (${generationState.completedMaterials}/${generationState.totalMaterials})`;
+}
+
+function updateCompletedCount() {
+    document.getElementById('completedCount').textContent = generationState.completedMaterials;
+}
+
+function updateTotalCount() {
+    document.getElementById('totalCount').textContent = generationState.totalMaterials;
+}
+
+function updateStartTime() {
+    if (generationState.startTime) {
+        document.getElementById('startTime').textContent = generationState.startTime.toLocaleTimeString();
+    }
+}
+
+function updateWeeklyProgressSummary() {
+    const completedWeeks = Object.values(generationState.weekProgress)
+        .filter(p => p.status === 'completed').length;
+    document.getElementById('weeklyProgressSummary').textContent = 
+        `${completedWeeks} of ${generationState.totalWeeks} weeks completed`;
+}
+
+function showTaskSpinner() {
+    document.getElementById('taskSpinner').style.display = 'inline-block';
+}
+
+function hideTaskSpinner() {
+    document.getElementById('taskSpinner').style.display = 'none';
+}
+
+function showTaskProgress() {
+    document.getElementById('taskProgress').style.display = 'block';
+}
+
+function hideTaskProgress() {
+    document.getElementById('taskProgress').style.display = 'none';
+}
+
+function updateTaskProgress(percentage) {
+    const progressBar = document.getElementById('taskProgressBar');
+    progressBar.style.width = percentage + '%';
+}
+
+// Utility Functions
+function calculateWeekProgress(weekNumber) {
+    const weekMaterials = generationState.completedFiles.filter(f => f.week_number === weekNumber);
+    const expectedMaterials = generationState.selectedMaterials.length; // Simplified calculation
+    return Math.min(100, (weekMaterials.length / expectedMaterials) * 100);
+}
+
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+function refreshStatus() {
+    const btn = document.getElementById('refreshBtn');
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    
+    fetch(`/api/session-status/${generationState.sessionId}`)
+        .then(response => response.json())
+        .then(data => {
+            addLogEntry('🔄 Status refreshed', 'info');
+            // Update UI based on fresh status
+            updateUIFromSessionData(data);
+        })
+        .catch(error => {
+            addLogEntry('❌ Error refreshing status: ' + error.message, 'error');
+        })
+        .finally(() => {
+            btn.innerHTML = '<i class="fas fa-sync-alt"></i>';
+        });
+}
+
+// Session Management Functions
+async function saveWeeklyPlan() {
+    try {
+        const response = await fetch('/api/save-weekly-plan', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                session_id: generationState.sessionId
+            })
+        });
+        
+        if (response.ok) {
+            addLogEntry('💾 Weekly plan saved successfully', 'success');
+        }
+    } catch (error) {
+        addLogEntry('⚠️ Warning: Could not save weekly plan - ' + error.message, 'warning');
+    }
+}
+
+function updateUIFromSessionData(sessionData) {
+    if (sessionData.module_data) {
+        updateModuleInfo(sessionData.module_data.title);
+    }
+    
+    if (sessionData.completed_files) {
+        sessionData.completed_files.forEach(file => {
+            addCompletedMaterial(file);
+        });
+    }
+    
+    updateOverallProgress();
+    updateCompletedCount();
+    updateTotalCount();
+    
+    if (sessionData.week_progress) {
+        Object.entries(sessionData.week_progress).forEach(([weekNum, progress]) => {
+            updateWeekProgress(parseInt(weekNum), progress.percentage, progress.status);
+        });
+    }
+}
+
+// Download Functions
+async function downloadAll() {
+    try {
+        addLogEntry('📦 Preparing complete package download...', 'info');
+        const response = await fetch(`/api/package-all/${generationState.sessionId}`, {
+            method: 'POST'
+        });
+        
+        if (response.ok) {
+            window.location.href = `/download-all/${generationState.sessionId}`;
+            addLogEntry('✅ Complete package download started', 'success');
+        } else {
+            throw new Error('Failed to create package');
+        }
+    } catch (error) {
+        addLogEntry('❌ Error creating download package: ' + error.message, 'error');
+    }
+}
+
+function selectiveDownload() {
+    populateSelectiveDownloadModal();
+    const modal = new bootstrap.Modal(document.getElementById('selectiveDownloadModal'));
+    modal.show();
+}
+
+function generateMore() {
+    if (confirm('This will redirect you to select additional materials to generate. Continue?')) {
+        window.location.href = `/material-selection/${generationState.sessionId}`;
+    }
+}
+
+function populateSelectiveDownloadModal() {
+    const weekOptions = document.getElementById('weekDownloadOptions');
+    const materialTypeOptions = document.getElementById('materialTypeOptions');
+    
+    // Clear existing options (keeping the select all checkboxes)
+    weekOptions.innerHTML = weekOptions.innerHTML.split('<hr>')[0] + '<hr>';
+    materialTypeOptions.innerHTML = materialTypeOptions.innerHTML.split('<hr>')[0] + '<hr>';
+    
+    // Populate week options
+    const weeks = [...new Set(generationState.completedFiles.map(m => m.week_number))];
+    weeks.sort((a, b) => a - b).forEach(week => {
+        const div = document.createElement('div');
+        div.className = 'form-check';
+        div.innerHTML = `
+            <input class="form-check-input week-option" type="checkbox" id="week${week}" value="week_${week}" onchange="updateSelectionSummary()">
+            <label class="form-check-label" for="week${week}">
+                Week ${week} 
+                <small class="text-muted">(${generationState.completedFiles.filter(f => f.week_number === week).length} files)</small>
+            </label>
+        `;
+        weekOptions.appendChild(div);
+    });
+    
+    // Populate material type options
+    const materialTypes = [...new Set(generationState.completedFiles.map(m => m.material_type))];
+    materialTypes.forEach(type => {
+        const div = document.createElement('div');
+        div.className = 'form-check';
+        const typeName = type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        div.innerHTML = `
+            <input class="form-check-input type-option" type="checkbox" id="${type}" value="type_${type}" onchange="updateSelectionSummary()">
+            <label class="form-check-label" for="${type}">
+                ${typeName}
+                <small class="text-muted">(${generationState.completedFiles.filter(f => f.material_type === type).length} files)</small>
+            </label>
+        `;
+        materialTypeOptions.appendChild(div);
+    });
+    
+    updateSelectionSummary();
+}
+
+function toggleAllWeeks() {
+    const selectAll = document.getElementById('selectAllWeeks');
+    const weekOptions = document.querySelectorAll('.week-option');
+    
+    weekOptions.forEach(option => {
+        option.checked = selectAll.checked;
+    });
+    
+    updateSelectionSummary();
+}
+
+function toggleAllTypes() {
+    const selectAll = document.getElementById('selectAllTypes');
+    const typeOptions = document.querySelectorAll('.type-option');
+    
+    typeOptions.forEach(option => {
+        option.checked = selectAll.checked;
+    });
+    
+    updateSelectionSummary();
+}
+
+function updateSelectionSummary() {
+    const selectedWeeks = document.querySelectorAll('.week-option:checked').length;
+    const selectedTypes = document.querySelectorAll('.type-option:checked').length;
+    const totalSelected = selectedWeeks + selectedTypes;
+    
+    const summaryElement = document.getElementById('selectionSummary');
+    const downloadBtn = document.getElementById('executeDownloadBtn');
+    
+    if (totalSelected === 0) {
+        summaryElement.textContent = 'No items selected';
+        downloadBtn.disabled = true;
+    } else {
+        let summary = '';
+        if (selectedWeeks > 0) summary += `${selectedWeeks} weeks`;
+        if (selectedTypes > 0) {
+            if (summary) summary += ' and ';
+            summary += `${selectedTypes} material types`;
+        }
+        summaryElement.textContent = `Selected: ${summary}`;
+        downloadBtn.disabled = false;
+    }
+}
+
+async function executeSelectiveDownload() {
+    const selectedOptions = [];
+    document.querySelectorAll('#selectiveDownloadModal input:checked').forEach(input => {
+        if (input.value && input.value !== 'on') {
+            selectedOptions.push(input.value);
+        }
+    });
+    
+    if (selectedOptions.length === 0) {
+        alert('Please select at least one option.');
+        return;
+    }
+    
+    try {
+        addLogEntry(`📦 Creating selective download package...`, 'info');
+        const response = await fetch(`/api/selective-download/${generationState.sessionId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ selections: selectedOptions })
+        });
+        
+        if (response.ok) {
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `selected_materials_${generationState.sessionId}.zip`;
+            a.click();
+            window.URL.revokeObjectURL(url);
+            
+            addLogEntry('✅ Selective download started', 'success');
+        } else {
+            throw new Error('Download failed');
+        }
+    } catch (error) {
+        addLogEntry('❌ Error with selective download: ' + error.message, 'error');
+    }
+    
+    bootstrap.Modal.getInstance(document.getElementById('selectiveDownloadModal')).hide();
+}
+
+async function downloadSingleFile(filePath) {
+    try {
+        window.open(`/api/download-file/${generationState.sessionId}?file=${encodeURIComponent(filePath)}`, '_blank');
+        addLogEntry(`📁 Downloading: ${filePath.split('/').pop()}`, 'info');
+    } catch (error) {
+        addLogEntry('❌ Error downloading file: ' + error.message, 'error');
+    }
+}
+
+// Additional Feature Functions
+function previewMaterial(filePath) {
+    // This would open a preview modal or new window
+    addLogEntry(`👁️ Preview requested: ${filePath.split('/').pop()}`, 'info');
+    // Implementation depends on file types supported
+}
+
+function showMaterialInfo(materialName) {
+    const material = generationState.completedFiles.find(f => f.material_name === materialName);
+    if (material) {
+        alert(`Material: ${material.material_name}\nWeek: ${material.week_number}\nType: ${material.material_type}\nFormat: ${material.file_format}\nGenerated: ${new Date(material.completedAt).toLocaleString()}`);
+    }
+}
+
+function previewMaterials() {
+    addLogEntry('🔍 Opening materials preview...', 'info');
+    // Implementation for bulk preview
+}
+
+function shareResults() {
+    const shareData = {
+        title: 'Course Materials Generated',
+        text: `Successfully generated ${generationState.completedFiles.length} course materials for ${generationState.totalWeeks} weeks`,
+        url: window.location.href
+    };
+    
+    if (navigator.share) {
+        navigator.share(shareData);
+    } else {
+        // Fallback to clipboard
+        navigator.clipboard.writeText(`${shareData.text}\n${shareData.url}`)
+            .then(() => addLogEntry('📋 Results copied to clipboard', 'success'))
+            .catch(() => addLogEntry('❌ Could not share results', 'error'));
+    }
+}
+
+function showWeekDetails(weekNumber) {
+    const weekMaterials = generationState.completedFiles.filter(f => f.week_number === weekNumber);
+    const weekProgress = generationState.weekProgress[weekNumber];
+    
+    let details = `Week ${weekNumber} Details:\n`;
+    details += `Status: ${weekProgress ? weekProgress.status : 'pending'}\n`;
+    details += `Materials: ${weekMaterials.length}\n\n`;
+    
+    if (weekMaterials.length > 0) {
+        details += 'Generated Materials:\n';
+        weekMaterials.forEach(material => {
+            details += `- ${material.material_name} (${material.file_format})\n`;
+        });
+    }
+    
+    alert(details);
+}
+
+// Error handling for unhandled errors
+function handleGenerationError(error) {
+    generationState.status = 'error';
+    updateStatusBadge('error', 'bg-danger');
+    updateCurrentTask('Generation Error', 'An error occurred during generation');
+    hideGenerationControls();
+    
+    // Show partial results if any
+    if (generationState.completedFiles.length > 0) {
+        showFinalActions();
+    }
+    
+    addLogEntry(`💥 Critical error: ${error.message}`, 'error');
+}
+
+// Cleanup on page unload
+window.addEventListener('beforeunload', function(e) {
+    if (generationState.eventSource) {
+        generationState.eventSource.close();
+    }
+});
+
+// Auto-save state periodically
+setInterval(() => {
+    if (generationState.status === 'running' && generationState.completedFiles.length > 0) {
+        // Auto-save progress (could be implemented)
+        console.log('Auto-saving progress...');
+    }
+}, 30000); // Every 30 seconds
+
+// Connection health check
+setInterval(() => {
+    if (generationState.lastHeartbeat) {
+        const timeSinceHeartbeat = new Date() - generationState.lastHeartbeat;
+        if (timeSinceHeartbeat > 60000) { // 1 minute without heartbeat
+            addLogEntry('⚠️ No activity detected - checking connection...', 'warning');
+        }
+    }
+}, 60000); // Check every minute
+
+function handleGenerationComplete() {
+    generationState.status = 'completed';
+    updateStatusBadge('completed', 'bg-success');
+    addLogEntry('🏆 All materials generated successfully! Redirecting to review...', 'success');
+    
+    // Calculate final statistics
+    calculateFinalStatistics();
+    
+    if (generationState.eventSource) {
+        generationState.eventSource.close();
+    }
+    
+    // Show completion message and redirect after delay
+    updateCurrentWeek(0, 'Generation Complete!');
+    updateCurrentTask('All materials ready for review', 'Redirecting to materials review page...');
+    showFinalActions();
+    
+    // Redirect to materials review page after 3 seconds
+    setTimeout(() => {
+        window.location.href = `/materials-review/${generationState.sessionId}`;
+    }, 3000);
+}
+
+function handleProgressUpdate(data) {
+    console.log('Progress update received:', data);
+    
+    switch (data.type) {
+        case 'heartbeat':
+            // Update connection status
+            generationState.lastHeartbeat = new Date();
+            break;
+            
+        case 'generation_start':
+            addLogEntry(`🎯 Starting generation for "${data.module_title}"`, 'info');
+            updateModuleInfo(data.module_title);
+            break;
+            
+        case 'week_start':
+            handleWeekStart(data);
+            break;
+            
+        case 'material_start':
+            handleMaterialStart(data);
+            break;
+            
+        case 'material_progress':
+            handleMaterialProgress(data);
+            break;
+            
+        case 'material_complete':
+            handleMaterialComplete(data);
+            break;
+            
+        case 'week_complete':
+            handleWeekComplete(data);
+            break;
+            
+        case 'generation_complete':
+            handleGenerationComplete();
+            break;
+            
+        case 'error':
+            handleError(data);
+            break;
+            
+        case 'timeout':
+            addLogEntry('⏰ Connection timeout - please refresh if generation seems stuck', 'warning');
+            break;
+            
+        default:
+            console.log('Unknown progress update type:', data.type);
+    }
+    
+    updateOverallProgress();
+    updateEstimatedTime();
+    updateGenerationSpeed();
+}
+
+// Add connection monitoring
+function startProgressListener() {
+    if (generationState.eventSource) {
+        generationState.eventSource.close();
+    }
+    
+    addLogEntry('🔌 Connecting to progress stream...', 'info');
+    
+    generationState.eventSource = new EventSource(`/api/generation-progress/${generationState.sessionId}`);
+    generationState.status = 'running';
+    generationState.reconnectAttempts = 0;
+    
+    generationState.eventSource.onmessage = function(event) {
+        try {
+            const data = JSON.parse(event.data);
+            generationState.lastHeartbeat = new Date();
+            handleProgressUpdate(data);
+        } catch (error) {
+            console.error('Error parsing progress data:', error);
+            addLogEntry('⚠️ Error parsing progress data: ' + error.message, 'warning');
+        }
+    };
+    
+    generationState.eventSource.onopen = function(event) {
+        addLogEntry('✅ Progress stream connected', 'success');
+        generationState.reconnectAttempts = 0;
+    };
+    
+    generationState.eventSource.onerror = function(event) {
+        console.error('EventSource error:', event);
+        addLogEntry('🔌 Connection lost - attempting to reconnect...', 'warning');
+        
+        if (generationState.reconnectAttempts < generationState.maxReconnectAttempts) {
+            generationState.reconnectAttempts++;
+            setTimeout(() => {
+                if (generationState.status === 'running') {
+                    addLogEntry(`🔄 Reconnection attempt ${generationState.reconnectAttempts}/${generationState.maxReconnectAttempts}`, 'info');
+                    startProgressListener();
+                }
+            }, Math.pow(2, generationState.reconnectAttempts) * 1000);
+        } else {
+            addLogEntry('❌ Maximum reconnection attempts reached. Please refresh the page.', 'error');
+            updateStatusBadge('connection_lost', 'bg-danger');
+        }
+    };
+}
+</script>
+
+<style>
+/* Enhanced styling for all components */
+.stat-card {
+    transition: transform 0.2s ease;
+}
+
+.stat-card:hover {
+    transform: scale(1.05);
+}
+
+.generation-log {
+    max-height: 400px;
+    overflow-y: auto;
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 15px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 0.9em;
+}
+
+.log-entry {
+    border-radius: 4px;
+    background: white;
+    animation: slideIn 0.3s ease;
+    transition: background-color 0.2s ease;
+}
+
+.log-entry:hover {
+    background-color: #f8f9fa !important;
+}
+
+@keyframes slideIn {
+    from { opacity: 0; transform: translateX(-20px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+.log-info { border-color: #17a2b8 !important; }
+.log-success { border-color: #28a745 !important; }
+.log-error { border-color: #dc3545 !important; }
+.log-warning { border-color: #ffc107 !important; }
+
+.week-overview-card {
+    transition: all 0.3s ease;
+    cursor: pointer;
+    border: 2px solid transparent;
+}
+
+.week-overview-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+    border-color: #007bff;
+}
+
+.material-item {
+    transition: all 0.3s ease;
+    animation: materialAppear 0.5s ease;
+}
+
+.material-item:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+}
+
+@keyframes materialAppear {
+    from { opacity: 0; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+.current-task-container {
+    border-left: 4px solid #007bff;
+    transition: border-color 0.3s ease;
+}
+
+.generation-controls .btn {
+    transition: all 0.2s ease;
+}
+
+.generation-controls .btn:hover {
+    transform: translateY(-1px);
+}
+
+.completion-summary {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    border-radius: 15px;
+    animation: completionPulse 2s ease infinite;
+}
+
+@keyframes completionPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.02); }
+}
+
+.progress {
+    border-radius: 10px;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.progress-bar {
+    border-radius: 10px;
+    transition: width 0.3s ease;
+}
+
+.selection-group {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.materials-table-view .table {
+    margin-bottom: 0;
+}
+
+.materials-table-view .table th {
+    border-top: none;
+    font-weight: 600;
+    color: #495057;
+}
+
+.btn-group-vertical .btn {
+    border-radius: 0;
+}
+
+.btn-group-vertical .btn:first-child {
+    border-top-left-radius: 0.375rem;
+    border-top-right-radius: 0.375rem;
+}
+
+.btn-group-vertical .btn:last-child {
+    border-bottom-left-radius: 0.375rem;
+    border-bottom-right-radius: 0.375rem;
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+    .generation-controls {
+        margin-top: 15px;
+    }
+    
+    .generation-controls .btn {
+        margin-bottom: 5px;
+        width: 100%;
+    }
+    
+    .completion-summary .row > div {
+        margin-bottom: 15px;
+    }
+    
+    .week-overview-card {
+        margin-bottom: 10px;
+    }
+    
+    .log-controls .btn {
+        margin-bottom: 5px;
+    }
+    
+    .stat-card h3 {
+        font-size: 1.5rem;
+    }
+}
+
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    .generation-log {
+        background: #2d3748;
+        color: #e2e8f0;
+    }
+    
+    .log-entry {
+        background: #4a5568;
+        color: #e2e8f0;
+    }
+    
+    .log-entry:hover {
+        background-color: #5a6578 !important;
+    }
+    
+    .current-task-container {
+        background: #2d3748 !important;
+        color: #e2e8f0;
+    }
+    
+    .week-overview-card {
+        background: #2d3748;
+        color: #e2e8f0;
+    }
+    
+    .material-item {
+        background: #2d3748;
+        color: #e2e8f0;
+    }
+}
+
+/* Loading animations */
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.spinner-border-sm {
+    width: 1rem;
+    height: 1rem;
+}
+
+/* Status badge animations */
+.badge {
+    transition: all 0.3s ease;
+}
+
+.badge.bg-success {
+    animation: successPulse 2s ease infinite;
+}
+
+@keyframes successPulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.8; }
+}
+
+/* Progress bar enhancements */
+.progress-bar-animated {
+    animation: progress-bar-stripes 1s linear infinite, progressGlow 2s ease-in-out infinite alternate;
+}
+
+@keyframes progressGlow {
+    from { box-shadow: 0 0 5px rgba(0, 123, 255, 0.5); }
+    to { box-shadow: 0 0 10px rgba(0, 123, 255, 0.8); }
+}
+
+/* Modal enhancements */
+.modal-content {
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+.modal-header {
+    border-bottom: 1px solid #e9ecef;
+    border-radius: 15px 15px 0 0;
+}
+
+.modal-footer {
+    border-top: 1px solid #e9ecef;
+    border-radius: 0 0 15px 15px;
+}
+
+/* Button enhancements */
+.btn {
+    transition: all 0.2s ease;
+    border-radius: 8px;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.btn-group .btn {
+    transform: none; /* Disable transform for button groups */
+}
+
+/* Card enhancements */
+.card {
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    transition: box-shadow 0.3s ease;
+}
+
+.card:hover {
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+}
+
+.card-header {
+    border-bottom: 1px solid #f0f0f0;
+    border-radius: 15px 15px 0 0;
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+}
+
+/* Activity indicators */
+.activity-indicator {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 5px;
+}
+
+.activity-indicator.active {
+    background: #28a745;
+    animation: pulse 2s infinite;
+}
+
+.activity-indicator.paused {
+    background: #ffc107;
+}
+
+.activity-indicator.error {
+    background: #dc3545;
+}
+
+/* Accessibility enhancements */
+@media (prefers-reduced-motion: reduce) {
+    .progress-bar-animated,
+    .spinner-border,
+    .activity-indicator.active,
+    .badge.bg-success,
+    .completion-summary {
+        animation: none;
+    }
+    
+    * {
+        transition: none !important;
+    }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+    .card {
+        border: 2px solid #000;
+    }
+    
+    .btn-outline-primary {
+        border-width: 2px;
+    }
+    
+    .progress {
+        border: 1px solid #000;
+    }
+}
+
+/* Print styles */
+@media print {
+    .generation-controls,
+    .btn,
+    .modal,
+    .spinner-border,
+    .progress-bar-animated {
+        display: none !important;
+    }
+    
+    .card {
+        break-inside: avoid;
+        box-shadow: none;
+        border: 1px solid #000;
+    }
+    
+    .generation-log {
+        max-height: none;
+        overflow: visible;
+    }
+}
+</style>
+{% endblock %}

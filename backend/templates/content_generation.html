@@ -1,0 +1,400 @@
+{% extends "base.html" %}
+
+{% block title %}Content Generation - AI Course Generator{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h4><i class="fas fa-magic me-2"></i>Content Generation Dashboard</h4>
+            </div>
+            <div class="card-body">
+                {% if module_data %}
+                <div class="module-info mb-4 p-3 bg-light rounded">
+                    <h5>{{ module_data.title }} ({{ module_data.code }})</h5>
+                    <p class="mb-0">
+                        <strong>Total Weeks:</strong> {{ week_plans|length }} | 
+                        <strong>Generated:</strong> <span id="generatedCount">0</span> | 
+                        <strong>Remaining:</strong> <span id="remainingCount">{{ week_plans|length }}</span>
+                    </p>
+                </div>
+                {% endif %}
+
+                <!-- Overall Progress -->
+                <div class="progress mb-4" style="height: 25px;">
+                    <div class="progress-bar progress-bar-striped" id="overallProgress" 
+                         role="progressbar" style="width: 0%;">
+                        0%
+                    </div>
+                </div>
+
+                <!-- Generation Controls -->
+                <div class="generation-controls mb-4 p-3 bg-light rounded">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h6 class="mb-2">Bulk Generation Options</h6>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="bulkLectureNotes" checked>
+                                        <label class="form-check-label" for="bulkLectureNotes">Lecture Notes</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="bulkSlides" checked>
+                                        <label class="form-check-label" for="bulkSlides">Lecture Slides</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="bulkQuizzes" checked>
+                                        <label class="form-check-label" for="bulkQuizzes">Quizzes</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="bulkTranscripts">
+                                        <label class="form-check-label" for="bulkTranscripts">Transcripts</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="bulkLabSheets">
+                                        <label class="form-check-label" for="bulkLabSheets">Lab Sheets</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="bulkSeminars">
+                                        <label class="form-check-label" for="bulkSeminars">Seminar Materials</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <button class="btn btn-primary me-2" onclick="generateAllContent()">
+                                <i class="fas fa-play me-2"></i>Generate All Selected
+                            </button>
+                            <button class="btn btn-outline-secondary" onclick="pauseGeneration()" id="pauseBtn" style="display: none;">
+                                <i class="fas fa-pause me-2"></i>Pause
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Week-by-week Generation -->
+                <div id="weekGenerationContainer">
+                    {% for week in week_plans %}
+                    <div class="week-generation-card card mb-3" data-week="{{ week.week_number }}">
+                        <div class="card-header">
+                            <div class="row align-items-center">
+                                <div class="col">
+                                    <h6 class="mb-0">Week {{ week.week_number }}: {{ week.title }}</h6>
+                                    <small class="text-muted">
+                                        {{ week.lecture_topics|length }} topics, 
+                                        {{ week.learning_outcomes|length }} learning outcomes
+                                    </small>
+                                </div>
+                                <div class="col-auto">
+                                    <span class="badge bg-secondary week-status">Pending</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <!-- Content Type Selection -->
+                                <div class="col-md-8">
+                                    <h6>Select content to generate:</h6>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-check">
+                                                <input class="form-check-input content-type" type="checkbox" 
+                                                       id="lectureNotes_{{ week.week_number }}" value="lecture_notes" checked>
+                                                <label class="form-check-label" for="lectureNotes_{{ week.week_number }}">
+                                                    <i class="fas fa-file-text me-1"></i> Lecture Notes
+                                                </label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input content-type" type="checkbox" 
+                                                       id="slides_{{ week.week_number }}" value="slides" checked>
+                                                <label class="form-check-label" for="slides_{{ week.week_number }}">
+                                                    <i class="fas fa-presentation me-1"></i> Lecture Slides
+                                                </label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input content-type" type="checkbox" 
+                                                       id="quizzes_{{ week.week_number }}" value="quizzes" checked>
+                                                <label class="form-check-label" for="quizzes_{{ week.week_number }}">
+                                                    <i class="fas fa-question-circle me-1"></i> Quizzes
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-check">
+                                                <input class="form-check-input content-type" type="checkbox" 
+                                                       id="transcripts_{{ week.week_number }}" value="transcripts">
+                                                <label class="form-check-label" for="transcripts_{{ week.week_number }}">
+                                                    <i class="fas fa-microphone me-1"></i> Transcripts
+                                                </label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input content-type" type="checkbox" 
+                                                       id="labSheets_{{ week.week_number }}" value="lab_sheets">
+                                                <label class="form-check-label" for="labSheets_{{ week.week_number }}">
+                                                    <i class="fas fa-flask me-1"></i> Lab Sheets
+                                                </label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input content-type" type="checkbox" 
+                                                       id="seminars_{{ week.week_number }}" value="seminars">
+                                                <label class="form-check-label" for="seminars_{{ week.week_number }}">
+                                                    <i class="fas fa-users me-1"></i> Seminar Materials
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Generation Controls -->
+                                <div class="col-md-4 text-center">
+                                    <div class="generation-progress mb-3">
+                                        <div class="progress" style="height: 20px;">
+                                            <div class="progress-bar week-progress-bar" 
+                                                 role="progressbar" style="width: 0%;">0%</div>
+                                        </div>
+                                    </div>
+                                    <button class="btn btn-primary btn-sm mb-2 generate-week-btn" 
+                                            onclick="generateWeekContent({{ week.week_number }})">
+                                        <i class="fas fa-play me-2"></i>Generate
+                                    </button>
+                                    <div class="generation-status small text-muted"></div>
+                                </div>
+                            </div>
+
+                            <!-- Generated Content Preview -->
+                            <div class="generated-content-preview mt-3" style="display: none;">
+                                <h6>Generated Content:</h6>
+                                <div class="generated-items"></div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Final Actions -->
+                <div class="final-actions mt-4 p-3 bg-light rounded" id="finalActions" style="display: none;">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h5><i class="fas fa-check-circle text-success me-2"></i>All Content Generated!</h5>
+                            <p class="mb-0">Ready to package and export your course materials.</p>
+                        </div>
+                        <div class="col-auto">
+                            <button class="btn btn-success me-2" onclick="packageAndExport()">
+                                <i class="fas fa-download me-2"></i>Package & Export
+                            </button>
+                            <button class="btn btn-outline-primary" onclick="previewAllContent()">
+                                <i class="fas fa-eye me-2"></i>Preview All
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const sessionId = '{{ session_id }}';
+let generatedWeeks = new Set();
+let totalWeeks = {{ week_plans|length }};
+let isGenerating = false;
+
+// Update progress counters
+function updateProgress() {
+    const generated = generatedWeeks.size;
+    const remaining = totalWeeks - generated;
+    const percentage = Math.round((generated / totalWeeks) * 100);
+    
+    document.getElementById('generatedCount').textContent = generated;
+    document.getElementById('remainingCount').textContent = remaining;
+    
+    const progressBar = document.getElementById('overallProgress');
+    progressBar.style.width = percentage + '%';
+    progressBar.textContent = percentage + '%';
+    
+    if (generated === totalWeeks) {
+        document.getElementById('finalActions').style.display = 'block';
+    }
+}
+
+// Generate content for specific week
+async function generateWeekContent(weekNumber) {
+    const weekCard = document.querySelector(`[data-week="${weekNumber}"]`);
+    const generateBtn = weekCard.querySelector('.generate-week-btn');
+    const statusDiv = weekCard.querySelector('.generation-status');
+    const progressBar = weekCard.querySelector('.week-progress-bar');
+    const statusBadge = weekCard.querySelector('.week-status');
+    
+    // Get selected content types
+    const contentTypes = [];
+    const checkboxes = weekCard.querySelectorAll('.content-type:checked');
+    checkboxes.forEach(cb => contentTypes.push(cb.value));
+    
+    if (contentTypes.length === 0) {
+        alert('Please select at least one content type to generate.');
+        return;
+    }
+    
+    // Update UI
+    generateBtn.disabled = true;
+    generateBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Generating...';
+    statusBadge.className = 'badge bg-warning';
+    statusBadge.textContent = 'Generating';
+    statusDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Starting generation...';
+    
+    try {
+        const response = await fetch('/api/generate-week-content', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                session_id: sessionId,
+                week_number: weekNumber,
+                content_types: contentTypes
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok) {
+            // Update progress
+            progressBar.style.width = '100%';
+            progressBar.textContent = '100%';
+            
+            statusBadge.className = 'badge bg-success';
+            statusBadge.textContent = 'Complete';
+            statusDiv.innerHTML = '<i class="fas fa-check text-success"></i> Generation complete!';
+            
+            generateBtn.innerHTML = '<i class="fas fa-edit me-2"></i>Regenerate';
+            generateBtn.disabled = false;
+            
+            // Mark as generated
+            generatedWeeks.add(weekNumber);
+            updateProgress();
+            
+            // Show generated content preview
+            showGeneratedContentPreview(weekCard, result.generated_content);
+            
+        } else {
+            throw new Error(result.detail || 'Failed to generate content');
+        }
+    } catch (error) {
+        statusBadge.className = 'badge bg-danger';
+        statusBadge.textContent = 'Error';
+        statusDiv.innerHTML = '<i class="fas fa-exclamation-triangle text-danger"></i> ' + error.message;
+        
+        generateBtn.innerHTML = '<i class="fas fa-redo me-2"></i>Retry';
+        generateBtn.disabled = false;
+    }
+}
+
+// Show generated content preview
+function showGeneratedContentPreview(weekCard, generatedContent) {
+    const previewDiv = weekCard.querySelector('.generated-content-preview');
+    const itemsDiv = weekCard.querySelector('.generated-items');
+    
+    itemsDiv.innerHTML = '';
+    
+    // Add preview items for each generated content type
+    Object.keys(generatedContent).forEach(contentType => {
+        const items = generatedContent[contentType];
+        items.forEach(item => {
+            const itemElement = document.createElement('div');
+            itemElement.className = 'generated-item d-inline-block me-2 mb-2';
+            itemElement.innerHTML = `
+                <span class="badge bg-primary">
+                    <i class="fas fa-file me-1"></i>${item.title}
+                </span>
+            `;
+            itemsDiv.appendChild(itemElement);
+        });
+    });
+    
+    previewDiv.style.display = 'block';
+}
+
+// Generate all content
+async function generateAllContent() {
+    if (isGenerating) return;
+    
+    isGenerating = true;
+    const pauseBtn = document.getElementById('pauseBtn');
+    pauseBtn.style.display = 'inline-block';
+    
+    // Get selected content types for bulk generation
+    const bulkContentTypes = [];
+    ['bulkLectureNotes', 'bulkSlides', 'bulkQuizzes', 'bulkTranscripts', 'bulkLabSheets', 'bulkSeminars'].forEach(id => {
+        const checkbox = document.getElementById(id);
+        if (checkbox.checked) {
+            bulkContentTypes.push(checkbox.id.replace('bulk', '').toLowerCase());
+        }
+    });
+    
+    // Generate content for each week sequentially
+    for (let weekNum = 1; weekNum <= totalWeeks; weekNum++) {
+        if (!isGenerating) break; // Check if paused
+        
+        if (!generatedWeeks.has(weekNum)) {
+            // Set content types for this week
+            const weekCard = document.querySelector(`[data-week="${weekNum}"]`);
+            const checkboxes = weekCard.querySelectorAll('.content-type');
+            checkboxes.forEach(cb => {
+                cb.checked = bulkContentTypes.includes(cb.value);
+            });
+            
+            // Generate content for this week
+            await generateWeekContent(weekNum);
+            
+            // Small delay between generations
+            await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+    }
+    
+    isGenerating = false;
+    pauseBtn.style.display = 'none';
+}
+
+// Pause generation
+function pauseGeneration() {
+    isGenerating = false;
+    document.getElementById('pauseBtn').style.display = 'none';
+}
+
+// Package and export
+async function packageAndExport() {
+    try {
+        const response = await fetch('/api/package-content', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `session_id=${sessionId}`
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok) {
+            window.location.href = `/export/${sessionId}`;
+        } else {
+            throw new Error(result.detail || 'Failed to package content');
+        }
+    } catch (error) {
+        alert('Error packaging content: ' + error.message);
+    }
+}
+
+// Preview all content
+function previewAllContent() {
+    window.open(`/preview-all-content/${sessionId}`, '_blank');
+}
+</script>
+{% endblock %}

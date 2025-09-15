@@ -1,0 +1,1059 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - AI Course Generator{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <!-- Main Hero Section -->
+        <div class="jumbotron bg-gradient p-5 rounded-3 mb-4" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+            <div class="container text-white">
+                <h1 class="display-4">
+                    <i class="fas fa-robot me-3"></i>
+                    AI Course Material Generator
+                </h1>
+                <p class="lead">
+                    Create comprehensive course materials with AI assistance. 
+                    Upload your module specifications and let our AI agents generate 
+                    lectures, slides, labs, and assessments.
+                </p>
+                <div class="mt-4">
+                    <a class="btn btn-light btn-lg me-3" href="/upload" role="button">
+                        <i class="fas fa-upload me-2"></i>
+                        Start New Project
+                    </a>
+                    <button class="btn btn-outline-light btn-lg" onclick="scrollToRecentSessions()">
+                        <i class="fas fa-history me-2"></i>
+                        View Recent Sessions
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Sessions & Materials Review Section -->
+<div class="row" id="recentSessionsSection">
+    <div class="col-12">
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h4><i class="fas fa-history me-2"></i>Recent Sessions & Generated Materials</h4>
+                <div>
+                    <button class="btn btn-outline-secondary btn-sm me-2" onclick="refreshSessions()">
+                        <i class="fas fa-sync-alt me-1"></i> Refresh
+                    </button>
+                    <button class="btn btn-outline-danger btn-sm" onclick="clearAllSessions()">
+                        <i class="fas fa-trash me-1"></i> Clear All
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <!-- Loading State -->
+                <div id="sessionsLoading" class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2 text-muted">Loading your sessions...</p>
+                </div>
+
+                <!-- Empty State -->
+                <div id="sessionsEmpty" class="text-center py-5" style="display: none;">
+                    <i class="fas fa-folder-open fa-3x text-muted mb-3"></i>
+                    <h5>No Sessions Found</h5>
+                    <p class="text-muted">You haven't generated any materials yet. Start your first project!</p>
+                    <a href="/upload" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>Create First Project
+                    </a>
+                </div>
+
+                <!-- Sessions List -->
+                <div id="sessionsList" style="display: none;">
+                    <!-- Filter and Search -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                <input type="text" class="form-control" id="sessionSearch" placeholder="Search by module name or session ID..." onkeyup="filterSessions()">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <select class="form-select" id="statusFilter" onchange="filterSessions()">
+                                <option value="">All Statuses</option>
+                                <option value="completed">Completed</option>
+                                <option value="in_progress">In Progress</option>
+                                <option value="paused">Paused</option>
+                                <option value="error">Error</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <select class="form-select" id="dateFilter" onchange="filterSessions()">
+                                <option value="">All Time</option>
+                                <option value="today">Today</option>
+                                <option value="week">This Week</option>
+                                <option value="month">This Month</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Sessions Grid -->
+                    <div class="row" id="sessionsGrid">
+                        <!-- Session cards will be populated by JavaScript -->
+                    </div>
+
+                    <!-- Pagination -->
+                    <nav id="sessionsPagination" style="display: none;">
+                        <ul class="pagination justify-content-center">
+                            <!-- Pagination will be populated by JavaScript -->
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- How It Works Section -->
+<div class="row">
+    <div class="col-12">
+        <h3 class="mb-4"><i class="fas fa-lightbulb me-2"></i>How It Works</h3>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100 process-card">
+            <div class="card-body text-center">
+                <div class="process-icon mb-3">
+                    <i class="fas fa-file-upload fa-3x text-primary"></i>
+                </div>
+                <h5 class="card-title">1. Upload Module Specs</h5>
+                <p class="card-text">
+                    Upload your module specification (PDF/Word) and optional textbook materials.
+                    Our AI will extract learning outcomes, assessments, and course structure.
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card h-100 process-card">
+            <div class="card-body text-center">
+                <div class="process-icon mb-3">
+                    <i class="fas fa-calendar-alt fa-3x text-success"></i>
+                </div>
+                <h5 class="card-title">2. Review Weekly Plan</h5>
+                <p class="card-text">
+                    Review and customize the AI-generated weekly breakdown and learning structure.
+                    Edit topics, activities, and outcomes to match your teaching style.
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card h-100 process-card">
+            <div class="card-body text-center">
+                <div class="process-icon mb-3">
+                    <i class="fas fa-download fa-3x text-info"></i>
+                </div>
+                <h5 class="card-title">3. Generate & Export</h5>
+                <p class="card-text">
+                    Generate all materials and export in multiple formats (PDF, Word, PowerPoint).
+                    Review, preview, and regenerate specific files as needed.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Features Section -->
+<div class="row mt-5">
+    <div class="col-12">
+        <h3 class="mb-4"><i class="fas fa-star me-2"></i>Features & Capabilities</h3>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="feature-list">
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Automatic learning outcome extraction</li>
+                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Intelligent weekly content planning</li>
+                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Comprehensive lecture notes generation</li>
+                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Professional PowerPoint slide creation</li>
+                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Interactive lab exercise development</li>
+                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Assessment and quiz generation</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="feature-list">
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Seminar discussion prompts</li>
+                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Lecture transcript generation</li>
+                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Multi-format export options</li>
+                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Material review and regeneration</li>
+                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Session management and recovery</li>
+                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Real-time progress tracking</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics Section -->
+<div class="row mt-5">
+    <div class="col-12">
+        <div class="card bg-light">
+            <div class="card-body">
+                <h4 class="card-title text-center mb-4">
+                    <i class="fas fa-chart-bar me-2"></i>Your Usage Statistics
+                </h4>
+                <div class="row text-center">
+                    <div class="col-md-3">
+                        <div class="stat-item">
+                            <h3 class="text-primary mb-0" id="totalSessions">0</h3>
+                            <small class="text-muted">Total Sessions</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-item">
+                            <h3 class="text-success mb-0" id="completedSessions">0</h3>
+                            <small class="text-muted">Completed</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-item">
+                            <h3 class="text-info mb-0" id="totalMaterials">0</h3>
+                            <small class="text-muted">Materials Generated</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-item">
+                            <h3 class="text-warning mb-0" id="totalSize">0 MB</h3>
+                            <small class="text-muted">Total Size</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Session Details Modal -->
+<div class="modal fade" id="sessionDetailsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Session Details
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="sessionDetailsBody">
+                <!-- Content will be populated by JavaScript -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="reviewMaterialsBtn" style="display: none;">
+                    <i class="fas fa-eye me-2"></i>Review Materials
+                </button>
+                <button type="button" class="btn btn-success" id="resumeSessionBtn" style="display: none;">
+                    <i class="fas fa-play me-2"></i>Resume Session
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteSessionModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-trash me-2"></i>Delete Session
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete this session and all its generated materials?</p>
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>This action cannot be undone!</strong> All files and progress will be permanently lost.
+                </div>
+                <div id="deleteSessionInfo">
+                    <!-- Session info will be populated here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" onclick="confirmDeleteSession()">
+                    <i class="fas fa-trash me-2"></i>Delete Session
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Global variables
+let allSessions = [];
+let filteredSessions = [];
+let currentPage = 1;
+let sessionsPerPage = 6;
+let currentSessionToDelete = null;
+
+// Initialize dashboard
+document.addEventListener('DOMContentLoaded', function() {
+    loadSessions();
+    loadStatistics();
+});
+
+// Load all sessions
+async function loadSessions() {
+    try {
+        showLoading(true);
+        
+        const response = await fetch('/api/sessions');
+        const sessions = await response.json();
+        
+        allSessions = sessions;
+        filteredSessions = [...sessions];
+        
+        if (sessions.length === 0) {
+            showEmptyState();
+        } else {
+            showSessionsList();
+            renderSessions();
+            setupPagination();
+        }
+        
+    } catch (error) {
+        console.error('Error loading sessions:', error);
+        showError('Failed to load sessions. Please refresh the page.');
+    } finally {
+        showLoading(false);
+    }
+}
+
+// Load usage statistics
+async function loadStatistics() {
+    try {
+        const response = await fetch('/api/usage-statistics');
+        
+        if (response.ok) {
+            const stats = await response.json();
+            document.getElementById('totalSessions').textContent = stats.total_sessions || 0;
+            document.getElementById('completedSessions').textContent = stats.completed_sessions || 0;
+            document.getElementById('totalMaterials').textContent = stats.total_materials || 0;
+            document.getElementById('totalSize').textContent = formatFileSize(stats.total_size || 0);
+        } else {
+            console.warn('Could not load statistics');
+            // Set default values
+            document.getElementById('totalSessions').textContent = 0;
+            document.getElementById('completedSessions').textContent = 0;
+            document.getElementById('totalMaterials').textContent = 0;
+            document.getElementById('totalSize').textContent = '0 B';
+        }
+        
+    } catch (error) {
+        console.error('Error loading statistics:', error);
+        // Set default values on error
+        document.getElementById('totalSessions').textContent = 0;
+        document.getElementById('completedSessions').textContent = 0;
+        document.getElementById('totalMaterials').textContent = 0;
+        document.getElementById('totalSize').textContent = '0 B';
+    }
+}
+
+// Render sessions grid
+function renderSessions() {
+    const grid = document.getElementById('sessionsGrid');
+    grid.innerHTML = '';
+    
+    const start = (currentPage - 1) * sessionsPerPage;
+    const end = start + sessionsPerPage;
+    const paginatedSessions = filteredSessions.slice(start, end);
+    
+    paginatedSessions.forEach(session => {
+        const sessionCard = createSessionCard(session);
+        grid.appendChild(sessionCard);
+    });
+    
+    if (paginatedSessions.length === 0) {
+        grid.innerHTML = `
+            <div class="col-12">
+                <div class="text-center py-4">
+                    <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                    <h5>No sessions match your filters</h5>
+                    <p class="text-muted">Try adjusting your search criteria</p>
+                </div>
+            </div>
+        `;
+    }
+}
+
+// Create session card
+function createSessionCard(session) {
+    const col = document.createElement('div');
+    col.className = 'col-lg-4 col-md-6 mb-4';
+    
+    const statusClass = getStatusClass(session.status);
+    const statusIcon = getStatusIcon(session.status);
+    const progressPercentage = session.total_materials > 0 
+        ? Math.round((session.completed_materials / session.total_materials) * 100)
+        : 0;
+    
+    col.innerHTML = `
+        <div class="card session-card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center py-2">
+                <div>
+                    <span class="badge ${statusClass}">
+                        <i class="${statusIcon} me-1"></i>${session.status}
+                    </span>
+                </div>
+                <div class="session-actions">
+                    <button class="btn btn-sm btn-outline-secondary" onclick="showSessionDetails('${session.id}')" title="Details">
+                        <i class="fas fa-info"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" onclick="deleteSession('${session.id}')" title="Delete">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <h6 class="card-title" title="${session.module_title || 'Untitled Module'}">
+                    ${truncateText(session.module_title || 'Untitled Module', 50)}
+                </h6>
+                <div class="session-meta mb-3">
+                    <small class="text-muted d-block">
+                        <i class="fas fa-calendar me-1"></i>
+                        ${formatDate(session.created_at)}
+                    </small>
+                    <small class="text-muted d-block">
+                        <i class="fas fa-clock me-1"></i>
+                        Last activity: ${formatTimeAgo(session.last_activity)}
+                    </small>
+                    <small class="text-muted d-block">
+                        <i class="fas fa-file me-1"></i>
+                        ${session.completed_materials || 0} / ${session.total_materials || 0} materials
+                    </small>
+                    ${session.total_size ? `
+                        <small class="text-muted d-block">
+                            <i class="fas fa-hdd me-1"></i>
+                            ${formatFileSize(session.total_size)}
+                        </small>
+                    ` : ''}
+                </div>
+                
+                ${session.status !== 'error' ? `
+                    <div class="progress mb-3" style="height: 6px;">
+                        <div class="progress-bar ${getProgressBarClass(session.status)}" 
+                             style="width: ${progressPercentage}%" 
+                             title="${progressPercentage}% complete">
+                        </div>
+                    </div>
+                ` : ''}
+                
+                <div class="session-id">
+                    <small class="text-muted">
+                        <i class="fas fa-tag me-1"></i>
+                        ID: ${session.id.substring(0, 8)}...
+                    </small>
+                </div>
+            </div>
+            <div class="card-footer bg-transparent">
+                <div class="d-grid gap-2">
+                    ${getSessionActions(session)}
+                </div>
+            </div>
+        </div>
+    `;
+    
+    return col;
+}
+
+// Get session actions based on status
+function getSessionActions(session) {
+    switch (session.status) {
+        case 'completed':
+            return `
+                <button class="btn btn-primary btn-sm" onclick="reviewMaterials('${session.id}')">
+                    <i class="fas fa-eye me-1"></i>Review Materials
+                </button>
+            `;
+        case 'in_progress':
+        case 'running':
+            return `
+                <button class="btn btn-success btn-sm" onclick="continueSession('${session.id}')">
+                    <i class="fas fa-play me-1"></i>Continue Generation
+                </button>
+            `;
+        case 'paused':
+            return `
+                <button class="btn btn-warning btn-sm" onclick="resumeSession('${session.id}')">
+                    <i class="fas fa-play me-1"></i>Resume Generation
+                </button>
+            `;
+        case 'error':
+            return `
+                <div class="btn-group w-100" role="group">
+                    <button class="btn btn-outline-secondary btn-sm" onclick="retrySession('${session.id}')">
+                        <i class="fas fa-redo me-1"></i>Retry
+                    </button>
+                    ${session.completed_materials > 0 ? `
+                        <button class="btn btn-primary btn-sm" onclick="reviewMaterials('${session.id}')">
+                            <i class="fas fa-eye me-1"></i>Review
+                        </button>
+                    ` : ''}
+                </div>
+            `;
+        default:
+            return `
+                <button class="btn btn-outline-secondary btn-sm" onclick="showSessionDetails('${session.id}')">
+                    <i class="fas fa-info me-1"></i>View Details
+                </button>
+            `;
+    }
+}
+
+// Session actions
+function reviewMaterials(sessionId) {
+    window.location.href = `/materials-review/${sessionId}`;
+}
+
+function continueSession(sessionId) {
+    window.location.href = `/generate/${sessionId}`;
+}
+
+function resumeSession(sessionId) {
+    window.location.href = `/generate/${sessionId}`;
+}
+
+function retrySession(sessionId) {
+    if (confirm('This will restart the generation process. Continue?')) {
+        window.location.href = `/material-selection/${sessionId}`;
+    }
+}
+
+// Show session details modal
+async function showSessionDetails(sessionId) {
+    try {
+        const response = await fetch(`/api/session-details/${sessionId}`);
+        const session = await response.json();
+        
+        const modalBody = document.getElementById('sessionDetailsBody');
+        const reviewBtn = document.getElementById('reviewMaterialsBtn');
+        const resumeBtn = document.getElementById('resumeSessionBtn');
+        
+        modalBody.innerHTML = `
+            <div class="session-details">
+                <div class="row mb-4">
+                    <div class="col-md-8">
+                        <h5>${session.module_title || 'Untitled Module'}</h5>
+                        <p class="text-muted">${session.module_description || 'No description available'}</p>
+                    </div>
+                    <div class="col-md-4 text-md-end">
+                        <span class="badge ${getStatusClass(session.status)} fs-6">
+                            <i class="${getStatusIcon(session.status)} me-1"></i>
+                            ${session.status}
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <h6>Session Information</h6>
+                        <ul class="list-unstyled">
+                            <li><strong>Session ID:</strong> ${session.id}</li>
+                            <li><strong>Created:</strong> ${formatDate(session.created_at)}</li>
+                            <li><strong>Last Activity:</strong> ${formatDate(session.last_activity)}</li>
+                            <li><strong>Duration:</strong> ${calculateDuration(session.created_at, session.last_activity)}</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Progress & Statistics</h6>
+                        <ul class="list-unstyled">
+                            <li><strong>Materials:</strong> ${session.completed_materials || 0} / ${session.total_materials || 0}</li>
+                            <li><strong>Weeks:</strong> ${session.total_weeks || 0}</li>
+                            <li><strong>Size:</strong> ${formatFileSize(session.total_size || 0)}</li>
+                            <li><strong>Success Rate:</strong> ${calculateSuccessRate(session)}%</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                ${session.selected_materials ? `
+                    <div class="mb-4">
+                        <h6>Selected Material Types</h6>
+                        <div class="d-flex flex-wrap gap-2">
+                            ${session.selected_materials.map(type => `
+                                <span class="badge bg-secondary">${formatMaterialType(type)}</span>
+                            `).join('')}
+                        </div>
+                    </div>
+                ` : ''}
+                
+                ${session.error_message ? `
+                    <div class="mb-4">
+                        <h6 class="text-danger">Error Information</h6>
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            ${session.error_message}
+                        </div>
+                    </div>
+                ` : ''}
+                
+                ${session.completed_materials > 0 ? `
+                    <div class="progress mb-2">
+                        <div class="progress-bar ${getProgressBarClass(session.status)}" 
+                             style="width: ${Math.round((session.completed_materials / session.total_materials) * 100)}%">
+                        </div>
+                    </div>
+                    <small class="text-muted">
+                        ${Math.round((session.completed_materials / session.total_materials) * 100)}% complete
+                    </small>
+                ` : ''}
+            </div>
+        `;
+        
+        // Show appropriate action buttons
+        reviewBtn.style.display = session.completed_materials > 0 ? 'inline-block' : 'none';
+        resumeBtn.style.display = ['paused', 'error'].includes(session.status) ? 'inline-block' : 'none';
+        
+        reviewBtn.onclick = () => reviewMaterials(session.id);
+        resumeBtn.onclick = () => resumeSession(session.id);
+        
+        const modal = new bootstrap.Modal(document.getElementById('sessionDetailsModal'));
+        modal.show();
+        
+    } catch (error) {
+        console.error('Error loading session details:', error);
+        alert('Failed to load session details');
+    }
+}
+
+// Delete session
+function deleteSession(sessionId) {
+    const session = allSessions.find(s => s.id === sessionId);
+    if (!session) return;
+    
+    currentSessionToDelete = sessionId;
+    
+    document.getElementById('deleteSessionInfo').innerHTML = `
+        <div class="session-to-delete">
+            <h6>${session.module_title || 'Untitled Module'}</h6>
+            <ul class="list-unstyled">
+                <li><strong>Session ID:</strong> ${session.id}</li>
+                <li><strong>Created:</strong> ${formatDate(session.created_at)}</li>
+                <li><strong>Materials:</strong> ${session.completed_materials || 0} files</li>
+                <li><strong>Size:</strong> ${formatFileSize(session.total_size || 0)}</li>
+            </ul>
+        </div>
+    `;
+    
+    const modal = new bootstrap.Modal(document.getElementById('deleteSessionModal'));
+    modal.show();
+}
+
+async function confirmDeleteSession() {
+    if (!currentSessionToDelete) return;
+    
+    try {
+        const response = await fetch(`/api/delete-session/${currentSessionToDelete}`, {
+            method: 'DELETE'
+        });
+        
+        if (response.ok) {
+            // Remove from local arrays
+            allSessions = allSessions.filter(s => s.id !== currentSessionToDelete);
+            filteredSessions = filteredSessions.filter(s => s.id !== currentSessionToDelete);
+            
+            // Re-render
+            renderSessions();
+            setupPagination();
+            loadStatistics();
+            
+            // Hide modal
+            bootstrap.Modal.getInstance(document.getElementById('deleteSessionModal')).hide();
+            
+            // Show success message
+            showSuccessMessage('Session deleted successfully');
+            
+        } else {
+            throw new Error('Failed to delete session');
+        }
+        
+    } catch (error) {
+        console.error('Error deleting session:', error);
+        alert('Failed to delete session. Please try again.');
+    } finally {
+        currentSessionToDelete = null;
+    }
+}
+
+// Filtering and pagination
+function filterSessions() {
+    const searchTerm = document.getElementById('sessionSearch').value.toLowerCase();
+    const statusFilter = document.getElementById('statusFilter').value;
+    const dateFilter = document.getElementById('dateFilter').value;
+    
+    filteredSessions = allSessions.filter(session => {
+        const matchesSearch = !searchTerm || 
+            (session.module_title && session.module_title.toLowerCase().includes(searchTerm)) ||
+            session.id.toLowerCase().includes(searchTerm);
+        
+        const matchesStatus = !statusFilter || session.status === statusFilter;
+        
+        const matchesDate = !dateFilter || matchesDateFilter(session.created_at, dateFilter);
+        
+        return matchesSearch && matchesStatus && matchesDate;
+    });
+    
+    currentPage = 1;
+    renderSessions();
+    setupPagination();
+}
+
+function matchesDateFilter(dateString, filter) {
+    const date = new Date(dateString);
+    const now = new Date();
+    
+    switch (filter) {
+        case 'today':
+            return date.toDateString() === now.toDateString();
+        case 'week':
+            const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+            return date >= weekAgo;
+        case 'month':
+            const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+            return date >= monthAgo;
+        default:
+            return true;
+    }
+}
+
+function setupPagination() {
+    const pagination = document.getElementById('sessionsPagination');
+    const totalPages = Math.ceil(filteredSessions.length / sessionsPerPage);
+    
+    if (totalPages <= 1) {
+        pagination.style.display = 'none';
+        return;
+    }
+    
+    pagination.style.display = 'block';
+    const paginationList = pagination.querySelector('.pagination');
+    paginationList.innerHTML = '';
+    
+    // Previous button
+    const prevLi = document.createElement('li');
+    prevLi.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
+    prevLi.innerHTML = `<a class="page-link" href="#" onclick="changePage(${currentPage - 1})">Previous</a>`;
+    paginationList.appendChild(prevLi);
+    
+    // Page numbers
+    for (let i = 1; i <= totalPages; i++) {
+        const li = document.createElement('li');
+        li.className = `page-item ${i === currentPage ? 'active' : ''}`;
+        li.innerHTML = `<a class="page-link" href="#" onclick="changePage(${i})">${i}</a>`;
+        paginationList.appendChild(li);
+    }
+    
+    // Next button
+    const nextLi = document.createElement('li');
+    nextLi.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
+    nextLi.innerHTML = `<a class="page-link" href="#" onclick="changePage(${currentPage + 1})">Next</a>`;
+    paginationList.appendChild(nextLi);
+}
+
+function changePage(page) {
+    const totalPages = Math.ceil(filteredSessions.length / sessionsPerPage);
+    
+    if (page < 1 || page > totalPages) return;
+    
+    currentPage = page;
+    renderSessions();
+    setupPagination();
+}
+
+// Utility functions
+function showLoading(show) {
+    document.getElementById('sessionsLoading').style.display = show ? 'block' : 'none';
+}
+
+function showEmptyState() {
+    document.getElementById('sessionsEmpty').style.display = 'block';
+    document.getElementById('sessionsList').style.display = 'none';
+}
+
+function showSessionsList() {
+    document.getElementById('sessionsEmpty').style.display = 'none';
+    document.getElementById('sessionsList').style.display = 'block';
+}
+
+function showError(message) {
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'alert alert-danger';
+    errorDiv.innerHTML = `<i class="fas fa-exclamation-triangle me-2"></i>${message}`;
+    
+    document.getElementById('sessionsGrid').appendChild(errorDiv);
+}
+
+function showSuccessMessage(message) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = 'alert alert-success alert-dismissible fade show';
+    alertDiv.innerHTML = `
+        <i class="fas fa-check-circle me-2"></i>${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.insertBefore(alertDiv, document.body.firstChild);
+    
+    // Auto-dismiss after 3 seconds
+    setTimeout(() => {
+        alertDiv.remove();
+    }, 3000);
+}
+
+// Helper functions
+function getStatusClass(status) {
+    const classes = {
+        'completed': 'bg-success',
+        'in_progress': 'bg-primary',
+        'running': 'bg-primary',
+        'paused': 'bg-warning',
+        'error': 'bg-danger',
+        'stopped': 'bg-secondary'
+    };
+    return classes[status] || 'bg-secondary';
+}
+
+function getStatusIcon(status) {
+    const icons = {
+        'completed': 'fas fa-check-circle',
+        'in_progress': 'fas fa-spinner fa-spin',
+        'running': 'fas fa-cog fa-spin',
+        'paused': 'fas fa-pause',
+        'error': 'fas fa-exclamation-triangle',
+        'stopped': 'fas fa-stop'
+    };
+    return icons[status] || 'fas fa-question-circle';
+}
+
+function getProgressBarClass(status) {
+    const classes = {
+        'completed': 'bg-success',
+        'in_progress': 'bg-primary',
+        'running': 'bg-primary',
+        'paused': 'bg-warning',
+        'error': 'bg-danger'
+    };
+    return classes[status] || 'bg-secondary';
+}
+
+function formatDate(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+}
+
+function formatTimeAgo(dateString) {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.round(diffMs / 60000);
+    const diffHours = Math.round(diffMs / 3600000);
+    const diffDays = Math.round(diffMs / 86400000);
+    
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    return `${diffDays}d ago`;
+}
+
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+}
+
+function formatMaterialType(type) {
+    return type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+}
+
+function truncateText(text, maxLength) {
+    return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
+}
+
+function calculateDuration(start, end) {
+    const startDate = new Date(start);
+    const endDate = new Date(end);
+    const diffMs = endDate - startDate;
+    const diffMins = Math.round(diffMs / 60000);
+    
+    if (diffMins < 60) return `${diffMins} minutes`;
+    const diffHours = Math.round(diffMins / 60);
+    if (diffHours < 24) return `${diffHours} hours`;
+    const diffDays = Math.round(diffHours / 24);
+    return `${diffDays} days`;
+}
+
+function calculateSuccessRate(session) {
+    if (!session.total_materials) return 100;
+    return Math.round((session.completed_materials / session.total_materials) * 100);
+}
+
+// Additional functions
+function refreshSessions() {
+    loadSessions();
+    loadStatistics();
+}
+
+function clearAllSessions() {
+    if (confirm('Are you sure you want to delete ALL sessions? This cannot be undone!')) {
+        // Implementation for clearing all sessions
+        fetch('/api/clear-all-sessions', { method: 'DELETE' })
+            .then(response => {
+                if (response.ok) {
+                    allSessions = [];
+                    filteredSessions = [];
+                    renderSessions();
+                    loadStatistics();
+                    showSuccessMessage('All sessions cleared successfully');
+                }
+            })
+            .catch(error => {
+                console.error('Error clearing sessions:', error);
+                alert('Failed to clear sessions');
+            });
+    }
+}
+
+function scrollToRecentSessions() {
+    document.getElementById('recentSessionsSection').scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'start' 
+    });
+}
+</script>
+
+<style>
+/* Enhanced dashboard styles */
+.process-card {
+    transition: all 0.3s ease;
+    border: none;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.process-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.process-icon {
+    transition: transform 0.3s ease;
+}
+
+.process-card:hover .process-icon {
+    transform: scale(1.1);
+}
+
+.session-card {
+    transition: all 0.3s ease;
+    border: none;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.session-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.session-actions .btn {
+    transition: all 0.2s ease;
+}
+
+.session-actions .btn:hover {
+    transform: scale(1.1);
+}
+
+.feature-list li {
+    transition: transform 0.2s ease;
+}
+
+.feature-list li:hover {
+    transform: translateX(5px);
+}
+
+.stat-item {
+    padding: 1rem;
+    border-radius: 8px;
+    transition: background-color 0.3s ease;
+}
+
+.stat-item:hover {
+    background-color: rgba(0,123,255,0.1);
+}
+
+.session-to-delete {
+    background: #f8f9fa;
+    padding: 1rem;
+    border-radius: 8px;
+    border-left: 4px solid #dc3545;
+}
+
+/* Progress bar animations */
+.progress-bar {
+    transition: width 0.3s ease;
+}
+
+/* Badge animations */
+.badge {
+    transition: all 0.2s ease;
+}
+
+.badge:hover {
+    transform: scale(1.05);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .session-actions {
+        margin-top: 10px;
+    }
+    
+    .stat-item {
+        margin-bottom: 1rem;
+    }
+    
+    .process-card {
+        margin-bottom: 1rem;
+    }
+}
+
+/* Loading animations */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.session-card {
+    animation: fadeIn 0.5s ease;
+}
+
+/* Pagination styling */
+.pagination .page-link {
+    color: #6c757d;
+    border-color: #dee2e6;
+}
+
+.pagination .page-item.active .page-link {
+    background-color: #667eea;
+    border-color: #667eea;
+}
+
+.pagination .page-link:hover {
+    background-color: #e9ecef;
+    border-color: #adb5bd;
+}
+</style>
+{% endblock %}

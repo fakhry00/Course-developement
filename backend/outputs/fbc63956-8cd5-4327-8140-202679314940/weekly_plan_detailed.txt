@@ -1,0 +1,246 @@
+DETAILED WEEKLY PLAN
+Session: fbc63956-8cd5-4327-8140-202679314940
+Generated: 2025-08-30 19:05:19
+============================================================
+
+MODULE INFORMATION
+------------------------------
+Title: Software Development 1
+Code: CMP020L001
+Credits: 20
+Semester: Semester 1
+
+
+============================================================
+
+WEEK 1: Introduction to Software Development
+==================================================
+Description:
+Introduce students to the field of software development, its importance in computer science, and the course structure.
+
+Learning Outcomes:
+  • LO1
+
+Lecture Topics:
+  • Overview of Software Development
+  • Course Structure and Expectations
+  • Introduction to Programming Languages
+
+
+--------------------------------------------------
+
+WEEK 2: Basic Syntax and Semantics
+==================================================
+Description:
+Focus on the basic syntax and semantics of a higher-level programming language, emphasizing code structure.
+
+Learning Outcomes:
+  • LO1
+
+Lecture Topics:
+  • Syntax vs. Semantics
+  • Basic Program Structure
+  • Writing Your First Program
+
+Lab Activities:
+  • Hands-on coding session to practice syntax
+
+
+--------------------------------------------------
+
+WEEK 3: Variables and Data Types
+==================================================
+Description:
+Introduce variables, primitive data types, and their usage in programming.
+
+Learning Outcomes:
+  • LO1
+
+Lecture Topics:
+  • Understanding Variables
+  • Primitive Data Types
+  • Type Casting and Conversion
+
+Lab Activities:
+  • Write programs using different data types
+
+
+--------------------------------------------------
+
+WEEK 4: Expressions and Assignments
+==================================================
+Description:
+Explore expressions, assignments, and their evaluation in programming.
+
+Learning Outcomes:
+  • LO1
+
+Lecture Topics:
+  • Expressions in Programming
+  • Assignment Statements
+  • Operator Precedence
+
+Lab Activities:
+  • Lab session on evaluating expressions
+
+
+--------------------------------------------------
+
+WEEK 5: Input and Output Operations
+==================================================
+Description:
+Learn about simple I/O operations, including file I/O, and their implementations.
+
+Learning Outcomes:
+  • LO1
+
+Lecture Topics:
+  • Standard Input and Output
+  • File I/O Basics
+  • Error Handling in I/O
+
+Lab Activities:
+  • Implement file I/O in a program
+
+
+--------------------------------------------------
+
+WEEK 6: Control Structures: Conditionals
+==================================================
+Description:
+Focus on conditional control structures and their applications in programming.
+
+Learning Outcomes:
+  • LO1
+  • LO2
+
+Lecture Topics:
+  • If Statements and Switch Cases
+  • Nested Conditionals
+  • Common Use Cases for Conditionals
+
+Lab Activities:
+  • Hands-on coding with conditional statements
+
+
+--------------------------------------------------
+
+WEEK 7: Control Structures: Iteration
+==================================================
+Description:
+Introduce iterative control structures and their implementation in programming.
+
+Learning Outcomes:
+  • LO1
+
+Lecture Topics:
+  • For Loops and While Loops
+  • Loop Control Statements
+  • Common Iterative Patterns
+
+Lab Activities:
+  • Implementing loops in sample programs
+
+
+--------------------------------------------------
+
+WEEK 8: Functions and Parameter Passing
+==================================================
+Description:
+Learn about functions, their definitions, and parameter passing techniques.
+
+Learning Outcomes:
+  • LO1
+
+Lecture Topics:
+  • Defining Functions
+  • Parameter Types and Passing Mechanisms
+  • Return Values and Scope
+
+Lab Activities:
+  • Write a program utilizing multiple functions
+
+
+--------------------------------------------------
+
+WEEK 9: Introduction to Recursion
+==================================================
+Description:
+Explore the concept of recursion and its applications in programming.
+
+Learning Outcomes:
+  • LO1
+  • LO2
+
+Lecture Topics:
+  • Understanding Recursion
+  • Base Cases and Recursive Cases
+  • Common Recursive Algorithms
+
+Lab Activities:
+  • Implement recursive functions
+
+
+--------------------------------------------------
+
+WEEK 10: Introduction to Algorithms
+==================================================
+Description:
+Introduce algorithms, their importance, and basic algorithmic problem-solving strategies.
+
+Learning Outcomes:
+  • LO3
+
+Lecture Topics:
+  • What is an Algorithm?
+  • Basic Algorithmic Strategies
+  • Analyzing Algorithm Efficiency
+
+Lab Activities:
+  • Develop simple algorithms for given problems
+
+
+--------------------------------------------------
+
+WEEK 11: Problem Solving with Algorithms
+==================================================
+Description:
+Focus on applying algorithms to solve real-world problems and evaluate different implementations.
+
+Learning Outcomes:
+  • LO3
+  • LO4
+
+Lecture Topics:
+  • Applying Algorithms to Problems
+  • Comparing Different Algorithm Implementations
+  • Debugging Algorithmic Solutions
+
+Lab Activities:
+  • Implement and test algorithms
+
+
+--------------------------------------------------
+
+WEEK 12: Course Review and Exam Preparation
+==================================================
+Description:
+Review key concepts covered in the course and prepare for the final exam.
+
+Learning Outcomes:
+  • LO1
+  • LO2
+  • LO3
+  • LO4
+
+Lecture Topics:
+  • Key Concepts Review
+  • Exam Strategies
+  • Q&A Session
+
+Deliverables:
+  • Final Exam Preparation Checklist
+
+
+--------------------------------------------------
+

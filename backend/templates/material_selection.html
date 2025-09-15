@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+
+{% block title %}Select Materials to Generate - AI Course Generator{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h4><i class="fas fa-list-check me-2"></i>Select Materials to Generate</h4>
+                <p class="mb-0">Choose which course materials you'd like to generate. You can add more later.</p>
+            </div>
+            <div class="card-body">
+                <form id="materialSelectionForm">
+                    <input type="hidden" name="session_id" value="{{ session_id }}">
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card border-primary">
+                                <div class="card-header bg-primary text-white">
+                                    <h6 class="mb-0"><i class="fas fa-book me-2"></i>Core Materials</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="form-check mb-3">
+                                        <input class="form-check-input" type="checkbox" id="lectureNotes" name="materials" value="lecture_notes" checked>
+                                        <label class="form-check-label" for="lectureNotes">
+                                            <strong>Lecture Notes</strong>
+                                            <small class="d-block text-muted">Detailed notes for each lecture (PDF, Word)</small>
+                                        </label>
+                                    </div>
+                                    
+                                    <div class="form-check mb-3">
+                                        <input class="form-check-input" type="checkbox" id="lectureSlides" name="materials" value="lecture_slides" checked>
+                                        <label class="form-check-label" for="lectureSlides">
+                                            <strong>Lecture Slides</strong>
+                                            <small class="d-block text-muted">PowerPoint presentations (PPTX, PDF)</small>
+                                        </label>
+                                    </div>
+                                    
+                                    <div class="form-check mb-3">
+                                        <input class="form-check-input" type="checkbox" id="transcripts" name="materials" value="transcripts" checked>
+                                        <label class="form-check-label" for="transcripts">
+                                            <strong>Lecture Transcripts</strong>
+                                            <small class="d-block text-muted">Narration scripts for video lectures (TXT)</small>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="card border-success">
+                                <div class="card-header bg-success text-white">
+                                    <h6 class="mb-0"><i class="fas fa-tasks me-2"></i>Interactive Materials</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="form-check mb-3">
+                                        <input class="form-check-input" type="checkbox" id="labMaterials" name="materials" value="lab_materials">
+                                        <label class="form-check-label" for="labMaterials">
+                                            <strong>Lab Materials</strong>
+                                            <small class="d-block text-muted">Exercise sheets and solutions (PDF, Word)</small>
+                                        </label>
+                                    </div>
+                                    
+                                    <div class="form-check mb-3">
+                                        <input class="form-check-input" type="checkbox" id="assessments" name="materials" value="assessments">
+                                        <label class="form-check-label" for="assessments">
+                                            <strong>Assessments</strong>
+                                            <small class="d-block text-muted">Quizzes and exam materials (PDF)</small>
+                                        </label>
+                                    </div>
+                                    
+                                    <div class="form-check mb-3">
+                                        <input class="form-check-input" type="checkbox" id="seminarMaterials" name="materials" value="seminar_materials">
+                                        <label class="form-check-label" for="seminarMaterials">
+                                            <strong>Seminar Materials</strong>
+                                            <small class="d-block text-muted">Discussion prompts and activities (PDF)</small>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="card border-info">
+                                <div class="card-header bg-info text-white">
+                                    <h6 class="mb-0"><i class="fas fa-file-alt me-2"></i>Overview Documents</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-check mb-3">
+                                                <input class="form-check-input" type="checkbox" id="moduleOverview" name="materials" value="module_overview" checked>
+                                                <label class="form-check-label" for="moduleOverview">
+                                                    <strong>Module Overview</strong>
+                                                    <small class="d-block text-muted">Complete module summary (PDF, Word)</small>
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-check mb-3">
+                                                <input class="form-check-input" type="checkbox" id="instructorGuide" name="materials" value="instructor_guide" checked>
+                                                <label class="form-check-label" for="instructorGuide">
+                                                    <strong>Instructor Guide</strong>
+                                                    <small class="d-block text-muted">Usage instructions and tips (PDF)</small>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 text-center">
+                        <button type="submit" class="btn btn-success btn-lg">
+                            <i class="fas fa-cogs me-2"></i>
+                            Start Generation
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('materialSelectionForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const sessionId = formData.get('session_id');
+    const selectedMaterials = formData.getAll('materials');
+    
+    if (selectedMaterials.length === 0) {
+        alert('Please select at least one material type to generate.');
+        return;
+    }
+    
+    // Redirect to generation page with selected materials
+    const materialsParam = selectedMaterials.join(',');
+    window.location.href = `/generate/${sessionId}?materials=${encodeURIComponent(materialsParam)}`;
+});
+</script>
+{% endblock %}
