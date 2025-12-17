@@ -1,20 +1,21 @@
 # Fix these in your requirements.txt:
-fastapi==0.115.5
-uvicorn[standard]==0.32.1
-python-multipart==0.0.12
-jinja2==3.1.4
-python-docx==1.1.2
-python-pptx==1.0.2
-PyMuPDF==1.24.14
-docx2txt==0.8                  # NOT 0.9
-reportlab==4.2.5               # NOT 4.4.3
-pypandoc==1.13
-crewai==0.80.0
-langchain==0.3.7
-langchain-openai==0.2.8
-openai==1.54.4
-pyttsx3==2.98
-Markdown==3.7                  # NOT 3.10
-pydantic==2.9.2
-python-dotenv==1.0.1
-aiofiles==24.1.0
+fastapi#==0.115.5
+#uvicorn[standard]==0.32.1
+python-multipart#==0.0.12
+jinja2#==3.1.4
+python-docx#==1.1.2
+python-pptx#==1.0.2
+PyMuPDF#==1.24.14
+docx2txt#==0.8                  # NOT 0.9
+reportlab#==4.2.5               # NOT 4.4.3
+pypandoc#==1.13
+crewai#==0.80.0
+langchain#==0.3.7
+langchain-openai#==0.2.8
+openai#==1.54.4
+pyttsx3#==2.98
+Markdown#==3.7                  # NOT 3.10
+pydantic#==2.9.2
+python-dotenv#==1.0.1
+aiofiles#==24.1.0
+
