@@ -1214,9 +1214,10 @@ def main():
     st.markdown("---")
     st.markdown("""
         <div style='text-align: center; color: #666; padding: 1rem;'>
-            AI Course Material Generator v1.0.0 | Powered by Claude Sonnet 4.5
+            AI Course Material Generator v1.0.0 | Dr Fakhreldin Saeed
         </div>
     """, unsafe_allow_html=True)
 
 if __name__ == "__main__":
+
     main()
