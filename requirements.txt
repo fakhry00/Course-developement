@@ -1,5 +1,5 @@
 # Fix these in your requirements.txt:
-fastapi#==0.115.5
+fastapi == 0.124.4
 #uvicorn[standard]==0.32.1
 python-multipart#==0.0.12
 jinja2#==3.1.4
@@ -18,4 +18,5 @@ Markdown#==3.7                  # NOT 3.10
 pydantic#==2.9.2
 python-dotenv#==1.0.1
 aiofiles#==24.1.0
+
 
