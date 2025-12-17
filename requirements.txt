@@ -8,15 +8,16 @@ PyMuPDF == 1.26.7
 docx2txt == 0.9                  
 reportlab == 4.4.6                
 pypandoc == 1.16.2
-crewai == 1.7.1
+crewai  
 langchain == 1.2.0
 langchain-openai == 1.1.4
-openai == 2.13.0
+openai  
 pyttsx3 == 2.99
 Markdown == 3.10                  
 pydantic == 2.12.5
 python-dotenv == 1.2.1
 aiofiles == 25.1.0
+
 
 
 
